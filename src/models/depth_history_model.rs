@@ -1,5 +1,8 @@
 use mongodb::bson::oid::ObjectId;
+use serde::{Deserialize, Serialize};
 
+
+#[derive(Deserialize,Serialize,Debug)]
 pub struct PoolDepthPriceHistory{
     pub _id : ObjectId,
     pub name : String,
