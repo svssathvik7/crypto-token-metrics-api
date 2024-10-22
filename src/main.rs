@@ -1,5 +1,5 @@
 use actix_web::{self, web::Data, App, HttpServer};
-use routes::depth_route::fetch_all_depths_to_db;
+use routes::{depth_route::fetch_all_depths_to_db, earning_route::fetch_all_earnings_to_db};
 use services::db::DataBase;
 pub mod services;
 pub mod models;
@@ -11,7 +11,7 @@ async fn main() -> std::io::Result<()>{
     print!("Connected to DB\n");
     HttpServer::new(
         move || {
-            App::new().app_data(db_data.clone()).service(fetch_all_depths_to_db)
+            App::new().app_data(db_data.clone()).service(fetch_all_depths_to_db).service(fetch_all_earnings_to_db)
         }
     ).bind("localhost:3000")?.run().await
 }

@@ -23,5 +23,5 @@ pub async fn fetch_all_depths_to_db(db:web::Data<DataBase>) -> impl Responder{
         }
         start = end_time;
     }
-    HttpResponse::Ok().body(format!("Fetched and added records to database"))
+    HttpResponse::Ok().body(format!("Fetched and added depth records to database"))
 }

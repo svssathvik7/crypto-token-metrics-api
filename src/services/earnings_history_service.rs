@@ -61,7 +61,7 @@ pub struct ApiResponse{
 impl PoolEarningHistory{
     pub async fn fetch_earning_history(db:&DataBase,interval:String,count:String,from:String) -> Result<i64,reqwestError>{
         let url = generate_api_url(interval, from, count);
-        print!("{}",url);
+        print!("url - {}",url);
         let response: ApiResponse = reqwest::get(&url).await?.json::<ApiResponse>().await?;
         println!("{:?}",response);
         let end_time = response.meta.endTime;
