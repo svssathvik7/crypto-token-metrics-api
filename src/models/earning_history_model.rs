@@ -12,7 +12,7 @@ pub struct PoolEarningSummary{
     pub liquidity_earnings : u64,
     pub liquidity_fees : u64,
     pub start_time : i64,
-    pub rune_price_usd : f64
+    pub rune_price_usd : f64,
 }
 
 #[derive(Debug,Deserialize,Serialize)]
@@ -26,5 +26,6 @@ pub struct PoolEarningHistory{
     pub saver_earning : u64,
     pub total_liquidity_fees_rune : u64,
     pub start_time : i64,
-    pub end_time : i64
+    pub end_time : i64,
+    pub earnings_summary : ObjectId
 }
