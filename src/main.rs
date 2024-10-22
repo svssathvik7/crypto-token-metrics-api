@@ -1,6 +1,7 @@
-use actix_web::{self, web::{self, Data}, App, HttpServer};
+use actix_web::{self, web::Data, App, HttpServer};
 use services::db::DataBase;
 pub mod services;
+pub mod models;
 #[actix_web::main]
 async fn main() -> std::io::Result<()>{
     let data_base = DataBase::init().await;
