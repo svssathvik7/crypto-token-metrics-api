@@ -1,6 +1,20 @@
 use mongodb::bson::oid::ObjectId;
 use serde::{Deserialize, Serialize};
 
+
+#[derive(Debug,Serialize,Deserialize)]
+pub struct PoolEarningSummary{
+    pub avg_node_count : f64,
+    pub block_rewards : u64,
+    pub bonding_earnings : u64,
+    pub earnings : u64,
+    pub end_time : i64,
+    pub liquidity_earnings : u64,
+    pub liquidity_fees : u64,
+    pub start_time : i64,
+    pub rune_price_usd : f64
+}
+
 #[derive(Debug,Deserialize,Serialize)]
 pub struct PoolEarningHistory{
     pub _id : ObjectId,
