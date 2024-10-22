@@ -1,6 +1,9 @@
+use std::error::Error as stdError;
+use actix_web::{http::Error, Error as actixError};
 use mongodb::bson::oid::ObjectId;
+use mongodb::error::Error as mongoError;
+use reqwest::Error as reqwestError;
 use serde::{Deserialize, Serialize};
-use reqwest::Error;
 use crate::services::{db::DataBase, depth_history_service::{ApiResponse, Interval}};
 // due to volume issues we are sticking to BTC BTC pool type
 fn generate_api_url(pool:&str,interval:&str,from:&str,to:&str) -> String{
@@ -30,7 +33,7 @@ pub struct PoolDepthPriceHistory{
 }
 
 impl TryFrom<Interval> for PoolDepthPriceHistory{
-    type Error = Box<dyn Error>;
+    type Error = Box<dyn stdError>;
     fn try_from(value: Interval) -> Result<Self, Self::Error> {
         let _id = ObjectId::new();
         let name = String::from("BTC.BTC");
@@ -67,10 +70,19 @@ impl TryFrom<Interval> for PoolDepthPriceHistory{
 }
 
 impl PoolDepthPriceHistory{
-    async fn store_price_history(db:DataBase,data:ApiResponse) -> Result<(),Error>{
-        
+    async fn store_price_history(db:DataBase,data:ApiResponse){
+        for interval in data.intervals{
+            match PoolDepthPriceHistory::try_from(interval) {
+                Ok(pool_history_interval) => {
+                    db.depth_history.insert_one(pool_history_interval).await;
+                },
+                Err(e) => {
+                    eprint!("Error writing pool history to db {:?}",e);
+                }
+            }
+        }
     }
-    async fn fetch_price_history(db:DataBase,pool:&str,interval:&str,_count:&str,to:&str,from:&str) -> Result<(),Error>{
+    async fn fetch_price_history(db:DataBase,pool:&str,interval:&str,_count:&str,to:&str,from:&str) -> Result<(),reqwestError>{
         let url = generate_api_url(pool,interval,from,to);
         let response = reqwest::get(&url).await?.json::<ApiResponse>().await?;
         self::PoolDepthPriceHistory::store_price_history(db,response);

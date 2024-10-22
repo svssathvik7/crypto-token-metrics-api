@@ -1,10 +1,12 @@
 use std::env;
 
 use dotenv::dotenv;
-use mongodb::Client;
+use mongodb::{Client, Collection};
+
+use crate::models::depth_history_model::PoolDepthPriceHistory;
 
 pub struct DataBase{
-    
+    pub depth_history: Collection<PoolDepthPriceHistory>
 }
 
 impl DataBase{
@@ -15,9 +17,9 @@ impl DataBase{
 
         let client = Client::with_uri_str(uri).await.unwrap();
         let db = client.database("token-metrics");
-
+        let depth_history_collection = db.collection("depth_history");
         DataBase{
-            
+            depth_history : depth_history_collection
         }
     }
 }
