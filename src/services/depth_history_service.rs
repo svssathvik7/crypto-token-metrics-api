@@ -36,3 +36,10 @@ pub struct Interval {
     pub units: String,
 }
 
+// imitating the actual midgard api response style
+#[derive(Debug,Deserialize,Serialize)]
+pub struct ApiResponse{
+    // if count > 1 we get vector of interval type objects
+    pub intervals : Vec<Interval>,
+    pub meta : Meta
+}
