@@ -6,8 +6,8 @@ use reqwest::Error as reqwestError;
 use serde::{Deserialize, Serialize};
 use crate::services::{db::DataBase, depth_history_service::{ApiResponse, Interval}};
 // due to volume issues we are sticking to BTC BTC pool type
-fn generate_api_url(pool:&str,interval:&str,from:&str,to:&str) -> String{
-    format!("https://midgard.ninerealms.com/v2/history/depths/{}?intervals={}&from={}&to={}",pool,interval,from,to)
+fn generate_api_url(pool:&str,interval:&str,from:&str,count:&str) -> String{
+    format!("https://midgard.ninerealms.com/v2/history/depths/{}?intervals={}&from={}&count={}",pool,interval,from,count)
 }
 
 fn generate_error_text(field_name:String) -> String{
@@ -82,10 +82,12 @@ impl PoolDepthPriceHistory{
             }
         }
     }
-    async fn fetch_price_history(db:DataBase,pool:&str,interval:&str,_count:&str,to:&str,from:&str) -> Result<(),reqwestError>{
-        let url = generate_api_url(pool,interval,from,to);
+    async fn fetch_price_history(db:DataBase,pool:&str,interval:&str,count:&str,from:&str) -> Result<i64,reqwestError>{
+        let url = generate_api_url(pool,interval,from,count);
         let response = reqwest::get(&url).await?.json::<ApiResponse>().await?;
+        let endTime = response.meta.endTime.clone();
+        let endTime = endTime.parse::<i64>().unwrap();
         self::PoolDepthPriceHistory::store_price_history(db,response);
-        Ok(())
+        Ok(endTime)
     }
 }
