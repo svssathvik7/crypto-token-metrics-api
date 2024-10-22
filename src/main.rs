@@ -8,7 +8,7 @@ pub mod routes;
 async fn main() -> std::io::Result<()>{
     let data_base = DataBase::init().await;
     let db_data = Data::new(data_base);
-    print!("Connected to DB");
+    print!("Connected to DB\n");
     HttpServer::new(
         move || {
             App::new().app_data(db_data.clone()).service(fetch_all_depths_to_db)

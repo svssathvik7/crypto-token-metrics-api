@@ -1,13 +1,13 @@
 use std::error::Error as stdError;
 use actix_web::{http::Error, Error as actixError};
-use mongodb::bson::oid::ObjectId;
+use mongodb::{action::InsertOne, bson::oid::ObjectId};
 use mongodb::error::Error as mongoError;
 use reqwest::Error as reqwestError;
 use serde::{Deserialize, Serialize};
 use crate::services::{db::DataBase, depth_history_service::{ApiResponse, Interval}};
 // due to volume issues we are sticking to BTC BTC pool type
 fn generate_api_url(pool:String,interval:String,from:String,count:String) -> String{
-    format!("https://midgard.ninerealms.com/v2/history/depths/{}?intervals={}&from={}&count={}",pool,interval,from,count)
+    format!("https://midgard.ninerealms.com/v2/history/depths/{}?interval={}&from={}&count={}",pool,interval,from,count)
 }
 
 fn generate_error_text(field_name:String) -> String{
@@ -70,24 +70,30 @@ impl TryFrom<Interval> for PoolDepthPriceHistory{
 }
 
 impl PoolDepthPriceHistory{
-    pub async fn store_price_history(db:&DataBase,data:ApiResponse){
-        for interval in data.intervals{
+    pub async fn store_price_history(db: &DataBase, data: ApiResponse) -> Result<(), mongoError> {
+        for interval in data.intervals {
             match PoolDepthPriceHistory::try_from(interval) {
                 Ok(pool_history_interval) => {
-                    db.depth_history.insert_one(pool_history_interval).await;
-                },
+                    if let Err(e) = db.depth_history.insert_one(pool_history_interval).await {
+                        eprint!("Error inserting record: {:?}", e);
+                        return Err(e);  // Return error if insertion fails
+                    }
+                }
                 Err(e) => {
-                    eprint!("Error writing pool history to db {:?}",e);
+                    eprint!("Error writing pool history to db: {:?}", e);
                 }
             }
         }
+        Ok(())
     }
     pub async fn fetch_price_history(db:&DataBase,pool:String,interval:String,count:String,from:String) -> Result<i64,reqwestError>{
         let url = generate_api_url(pool,interval,from,count);
+        println!("{}",url);
         let response = reqwest::get(&url).await?.json::<ApiResponse>().await?;
-        let endTime = response.meta.endTime.clone();
-        let endTime = endTime.parse::<i64>().unwrap();
-        self::PoolDepthPriceHistory::store_price_history(db,response);
-        Ok(endTime)
+        // println!("{:?}",response);
+        let end_time = response.meta.endTime.clone();
+        let end_time = end_time.parse::<i64>().unwrap();
+        self::PoolDepthPriceHistory::store_price_history(db,response).await;
+        Ok(end_time)
     }
 }
