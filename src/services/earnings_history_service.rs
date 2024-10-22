@@ -62,7 +62,10 @@ impl PoolEarningHistory{
     pub async fn fetch_earning_history(db:&DataBase,interval:String,count:String,from:String) -> Result<i64,reqwestError>{
         let url = generate_api_url(interval, from, count);
         print!("{}",url);
-        let response = reqwest::get(&url).await?;
-        Ok(5)
+        let response: ApiResponse = reqwest::get(&url).await?.json::<ApiResponse>().await?;
+        println!("{:?}",response);
+        let end_time = response.meta.endTime;
+        let end_time = end_time.parse::<i64>().unwrap();
+        Ok(end_time)
     }
 }
