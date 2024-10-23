@@ -8,7 +8,7 @@ pub async fn fetch_all_earnings_to_db(db:web::Data<DataBase>) -> impl Responder{
     let current_time_stamp = Utc::now().timestamp();
     let mut start = 1647913096;
     loop {
-        let end_time = match PoolEarningHistory::fetch_earning_history(db.get_ref(), "hour".to_string(), 400.to_string(), (start).to_string()).await {
+        let end_time = match PoolEarningHistory::fetch_earning_history(db.get_ref(), "hour", "400", &(start).to_string()).await {
             Ok(response) => response,
             Err(e) => {
                 println!("Failed to fetch and update db with fetch price history! {:?}\n",e);
