@@ -1,4 +1,4 @@
-use actix_web::{web, HttpResponse, Responder};
+use actix_web::{web::{self, ServiceConfig}, HttpResponse, Responder};
 use chrono::Utc;
 
 use crate::{models::rune_pool_model::RunePool, services::db::DataBase};
@@ -23,4 +23,9 @@ async fn fetch_all_rune_pools_to_db(db:web::Data<DataBase>) -> impl Responder{
         start = end_time;
     }
     HttpResponse::Ok().body(format!("Fetched and added rune pool records to database"))
+}
+
+pub fn init(config:&mut ServiceConfig){
+    config.service(fetch_all_rune_pools_to_db);
+    ()
 }
