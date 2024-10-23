@@ -5,7 +5,7 @@ use reqwest::Error as reqwestError;
 use super::db::DataBase;
 
 fn generate_api_url(pool:String,interval:String,from:String,count:String) -> String{
-    format!("https://midgard.ninerealms.com/v2/history/swaps?pool={}interval={}&from={}&count={}",pool,interval,from,count)
+    format!("https://midgard.ninerealms.com/v2/history/swaps?pool={}&interval={}&from={}&count={}",pool,interval,from,count)
 }
 
 
@@ -95,16 +95,17 @@ pub struct Interval {
 
 #[derive(Debug,Serialize,Deserialize)]
 pub struct ApiResponse{
-    pub meta: Meta,
-    pub intervals: Vec<Interval>
+    pub intervals: Vec<Interval>,
+    pub meta: Meta
 }
 
 impl SwapHistory{
-    pub async fn fetch_swap_history(db:&DataBase,interval:String,count:String,from:String) -> Result<i64,reqwestError>{
-        let url = generate_api_url("BTC.BTC".to_string(),interval, from, count);
+    pub async fn fetch_swap_history(db:&DataBase,pool:String,interval:String,count:String,from:String) -> Result<i64,reqwestError>{
+        let url = generate_api_url(pool,interval, from, count);
         print!("url - {}",url);
         let response: ApiResponse = reqwest::get(&url).await?.json::<ApiResponse>().await?;
-        // println!("{:?}",response);
+        
+        println!("{:?}",response);
         let end_time = response.meta.endTime.clone();
         let end_time = end_time.parse::<i64>().unwrap();
         Ok(end_time)
