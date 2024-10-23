@@ -12,7 +12,8 @@ pub struct QueryParams{
     pub from : Option<u64>,
     pub page : Option<u64>,
     pub sort_by : Option<String>,
-    pub sort_order : Option<i8> 
+    pub sort_order : Option<i8>,
+    pub limit : Option<i8> 
 }
 
 #[actix_web::get("")]

@@ -74,6 +74,7 @@ impl DataBase {
             page,
             sort_by,
             sort_order,
+            limit
         } = params;
 
         let seconds_per_interval = match interval.as_ref().unwrap().as_str() {
@@ -96,7 +97,7 @@ impl DataBase {
             query.insert("pool", pool);
         }
         
-        let limit: u32 = if let Some(count) = count { count } else { 400 };
+        let limit: i8 = if let Some(limit) = limit { limit } else { 20 };
 
         if let Some(from) = from {
             query.insert("start_time", doc! { "$gte": from as i64 });
