@@ -6,6 +6,7 @@ use futures_util::StreamExt;
 use mongodb::bson::Document;
 use mongodb::{bson::doc, Client, Collection};
 
+use crate::models::api_request_param_model::QueryParams;
 use crate::models::custom_error_model::CustomError;
 use crate::{
     models::{
@@ -14,7 +15,6 @@ use crate::{
         rune_pool_model::RunePool,
         swap_history_model::SwapHistory,
     },
-    routes::depth_route::QueryParams,
 };
 
 
@@ -78,6 +78,10 @@ impl DataBase {
         let page = page.unwrap_or(1);
 
         if let Some(pool) = pool {
+            // for now due to volume and computation constraints our depth history is confined to only BTC.BTC pool
+            if pool != "BTC.BTC"{
+                return Err(CustomError::InvalidInput("Depth and price history for only BTC.BTC available".to_string()));
+            }
             query.insert("pool", pool);
         }
         

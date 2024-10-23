@@ -1,7 +1,12 @@
 use actix_web::{web::{self, ServiceConfig}, HttpResponse, Responder};
 use chrono::Utc;
 
-use crate::{models::swap_history_model::SwapHistory, services::db::DataBase};
+use crate::{models::{api_request_param_model::QueryParams, swap_history_model::SwapHistory}, services::db::DataBase};
+
+#[actix_web::get("")]
+pub async fn get_swaps_history(db:web::Data<DataBase>,params:web::Query<QueryParams>) -> HttpResponse{
+    
+}
 
 // Protected route
 // Expensive function
@@ -27,6 +32,6 @@ pub async fn fetch_all_swaps_to_db(db:web::Data<DataBase>) -> impl Responder{
 }
 
 pub fn init(config:&mut ServiceConfig){
-    config.service(fetch_all_swaps_to_db);
+    config.service(fetch_all_swaps_to_db).service(get_swaps_history);
     ()
 }
