@@ -2,7 +2,7 @@ use std::error::Error as stdError;
 use mongodb::bson::oid::ObjectId;
 
 use serde::{Deserialize, Serialize};
-use crate::services::{db::DataBase, depth_history_service::{ApiResponse, Interval}};
+use crate::services::depth_history_service::Interval;
 
 fn generate_error_text(field_name:String) -> String{
     format!("Incorrect {} format",field_name)
