@@ -1,7 +1,16 @@
 use actix_web::{web::{self, ServiceConfig}, HttpResponse, Responder};
 use chrono::Utc;
-
+use serde::{Deserialize, Serialize};
 use crate::{models::depth_history_model::PoolDepthPriceHistory, services::db::DataBase};
+
+#[derive(Debug,Serialize,Deserialize)]
+pub struct QueryParams{
+    pub interval : Option<String>,
+    pub count : Option<u16>,
+    pub to : Option<u64>,
+    pub from : Option<u64>
+}
+
 
 // Protected route
 // Expensive function
