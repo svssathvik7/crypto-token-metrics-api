@@ -1,11 +1,20 @@
 use actix_web::{web::{self, ServiceConfig}, HttpResponse, Responder};
 use chrono::Utc;
 
-use crate::{models::{api_request_param_model::QueryParams, swap_history_model::SwapHistory}, services::db::DataBase};
+use crate::{models::{api_request_param_model::{validate_query, QueryParams}, swap_history_model::SwapHistory}, services::db::DataBase};
 
 #[actix_web::get("")]
 pub async fn get_swaps_history(db:web::Data<DataBase>,params:web::Query<QueryParams>) -> HttpResponse{
-    
+    if let Err(validation_err) = validate_query(&params) {
+        return validation_err;
+    }
+    match db.get_swaps_history_api(params.into_inner()).await {
+        Ok(result) => HttpResponse::Ok().json(result),
+        Err(e) => {
+            eprint!("Error at /swaps");
+            HttpResponse::InternalServerError().json(e)
+        }
+    }
 }
 
 // Protected route

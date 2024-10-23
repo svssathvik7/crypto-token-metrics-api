@@ -11,7 +11,7 @@ pub struct QueryParams{
     pub page : Option<u64>,
     pub sort_by : Option<String>,
     pub sort_order : Option<i8>,
-    pub limit : Option<i8> 
+    pub limit : Option<i16> 
 }
 
 pub fn validate_query(query: &QueryParams) -> Result<(), HttpResponse> {

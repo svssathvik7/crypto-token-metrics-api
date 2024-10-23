@@ -1,3 +1,4 @@
+#![recursion_limit = "256"]
 use actix_web::{self, web::{scope, Data}, App, HttpServer};
 
 use routes::{depth_route, earning_route::fetch_all_earnings_to_db, rune_pool_route, swap_route::{self}};
