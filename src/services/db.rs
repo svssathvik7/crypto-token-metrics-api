@@ -119,6 +119,7 @@ impl DataBase {
 
         let sort_filter = if let Some(sort_by) = sort_by {
             if let Some(sort_order) = sort_order {
+                let sort_order = if sort_order == 1 {1} else {-1};
                 doc! { sort_by: sort_order }
             } else {
                 doc! { sort_by: 1 }
