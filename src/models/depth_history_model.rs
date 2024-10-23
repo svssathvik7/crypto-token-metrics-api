@@ -4,7 +4,7 @@ use mongodb::bson::oid::ObjectId;
 use serde::{Deserialize, Serialize};
 use crate::services::depth_history_service::Interval;
 
-fn generate_error_text(field_name:String) -> String{
+fn generate_error_text(field_name:&str) -> String{
     format!("Incorrect {} format",field_name)
 }
 
@@ -31,18 +31,18 @@ impl TryFrom<Interval> for PoolDepthPriceHistory{
     fn try_from(value: Interval) -> Result<Self, Self::Error> {
         let _id = ObjectId::new();
         let pool = String::from("BTC.BTC");
-        let asset_depth = value.assetDepth.parse::<f64>().expect(&generate_error_text(value.assetDepth));
-        let asset_price = value.assetPrice.parse::<f64>().expect(&generate_error_text(value.assetPrice));
-        let asset_price_usd = value.assetPriceUSD.parse::<f64>().expect(&generate_error_text(value.assetPriceUSD));
-        let end_time = value.endTime.parse::<i64>().expect(&generate_error_text(value.endTime));
-        let liquidity_units = value.liquidityUnits.parse::<f64>().expect(&generate_error_text(value.liquidityUnits));
-        let luvi = value.luvi.parse::<f64>().expect(&generate_error_text(value.luvi));
-        let members_count = value.membersCount.parse::<i64>().expect(&generate_error_text(value.membersCount));
-        let rune_depth = value.runeDepth.parse::<f64>().expect(&generate_error_text(value.runeDepth));
-        let start_time = value.startTime.parse::<i64>().expect(&generate_error_text(value.startTime));
-        let synth_supply = value.synthSupply.parse::<f64>().expect(&generate_error_text(value.synthSupply));
-        let synth_units = value.synthUnits.parse::<f64>().expect(&generate_error_text(value.synthUnits));
-        let units = value.units.parse::<f64>().expect(&generate_error_text(value.units));
+        let asset_depth = value.assetDepth.parse::<f64>().expect(&generate_error_text("assetDepth"));
+        let asset_price = value.assetPrice.parse::<f64>().expect(&generate_error_text("assetPrice"));
+        let asset_price_usd = value.assetPriceUSD.parse::<f64>().expect(&generate_error_text("assetPriceUSD"));
+        let end_time = value.endTime.parse::<i64>().expect(&generate_error_text("endTime"));
+        let liquidity_units = value.liquidityUnits.parse::<f64>().expect(&generate_error_text("liquidityUnits"));
+        let luvi = value.luvi.parse::<f64>().expect(&generate_error_text("luvi"));
+        let members_count = value.membersCount.parse::<i64>().expect(&generate_error_text("membersCount"));
+        let rune_depth = value.runeDepth.parse::<f64>().expect(&generate_error_text("runeDepth"));
+        let start_time = value.startTime.parse::<i64>().expect(&generate_error_text("startTime"));
+        let synth_supply = value.synthSupply.parse::<f64>().expect(&generate_error_text("synthSupply"));
+        let synth_units = value.synthUnits.parse::<f64>().expect(&generate_error_text("synthUnits"));
+        let units = value.units.parse::<f64>().expect(&generate_error_text("units"));
         let pool_price_document = PoolDepthPriceHistory {
             _id,
             pool,

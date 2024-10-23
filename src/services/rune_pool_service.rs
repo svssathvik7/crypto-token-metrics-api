@@ -1,4 +1,3 @@
-use mongodb::bson::oid::ObjectId;
 use serde::{Deserialize, Serialize};
 
 use crate::models::rune_pool_model::RunePool;
@@ -7,10 +6,6 @@ use super::db::DataBase;
 
 fn generate_api_url(interval:&str,from:&str,count:&str) -> String{
     format!("https://midgard.ninerealms.com/v2/history/runepool?interval={}&from={}&count={}",interval,from,count)
-}
-
-fn generate_error_text(field_name:&str) -> String{
-    format!("Incorrect {} format",field_name)
 }
 
 #[derive(Debug,Serialize,Deserialize)]
@@ -40,16 +35,16 @@ pub struct ApiResponse{
 impl RunePool{
     pub async fn store_rune_pool(db:&DataBase,data:ApiResponse){
         for interval in data.intervals{
-            let rune_pool_obj = Self {
-                _id : ObjectId::new(),
-                count : interval.count.parse::<f64>().expect(&generate_error_text("count")),
-                end_time : interval.endTime.parse::<i64>().expect(&generate_error_text("endTime")),
-                start_time : interval.startTime.parse::<i64>().expect(&generate_error_text("startTime")),
-                units : interval.units.parse::<f64>().expect(&generate_error_text("untis"))
-            };
-            match db.rune_pool_history.insert_one(rune_pool_obj).await {
-                Ok(_record) => println!("Rune pool record writted to db!"),
-                Err(e) => eprint!("Err adding rune pool to db {}",e)
+            match RunePool::try_from(interval) {
+                Ok(rune_pool_object) => {
+                    match db.rune_pool_history.insert_one(rune_pool_object).await {
+                        Ok(_record) => println!("Rune pool record writted to db!"),
+                        Err(e) => eprint!("Err adding rune pool to db {}",e)
+                    }
+                },
+                Err(e) => {
+                    eprint!("Error parsing interval to rune pool object! {}",e)
+                }
             }
         }
     }
