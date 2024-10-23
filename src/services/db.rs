@@ -8,15 +8,12 @@ use mongodb::{bson::doc, Client, Collection};
 
 use crate::models::api_request_param_model::QueryParams;
 use crate::models::custom_error_model::CustomError;
-use crate::{
-    models::{
-        depth_history_model::PoolDepthPriceHistory,
-        earning_history_model::{PoolEarningHistory, PoolEarningSummary},
-        rune_pool_model::RunePool,
-        swap_history_model::SwapHistory,
-    },
+use crate::models::{
+    depth_history_model::PoolDepthPriceHistory,
+    earning_history_model::{PoolEarningHistory, PoolEarningSummary},
+    rune_pool_model::RunePool,
+    swap_history_model::SwapHistory,
 };
-
 
 pub struct DataBase {
     pub depth_history: Collection<PoolDepthPriceHistory>,
@@ -63,7 +60,7 @@ impl DataBase {
             page,
             sort_by,
             sort_order,
-            limit
+            limit,
         } = params;
 
         let seconds_per_interval = match interval.as_ref().unwrap().as_str() {
@@ -80,36 +77,39 @@ impl DataBase {
 
         if let Some(pool) = pool {
             // for now due to volume and computation constraints our depth history is confined to only BTC.BTC pool
-            if pool != "BTC.BTC"{
-                return Err(CustomError::InvalidInput("Depth and price history for only BTC.BTC available".to_string()));
+            if pool != "BTC.BTC" {
+                return Err(CustomError::InvalidInput(
+                    "Depth and price history for only BTC.BTC available".to_string(),
+                ));
             }
             query.insert("pool", pool);
         }
-        
+
         let limit: i16 = if let Some(limit) = limit { limit } else { 400 };
 
         if let Some(from) = from {
             query.insert("start_time", doc! { "$gte": from as i64 });
-        }
-        else{
-            let calc_start = if let Some(to) = to{
+        } else {
+            let calc_start = if let Some(to) = to {
                 to as i64
-            }else{
+            } else {
                 Utc::now().timestamp() as i64
             };
             let count = count.unwrap_or(400) as i64;
             let queried_interval_duration = seconds_per_interval as i64;
-            query.insert("start_time", doc! {"$gte": calc_start-(count*queried_interval_duration) as i64});
+            query.insert(
+                "start_time",
+                doc! {"$gte": calc_start-(count*queried_interval_duration) as i64},
+            );
         }
 
         if let Some(to) = to {
             query.insert("end_time", doc! { "$lte": to as i64 });
         }
 
-
         let sort_filter = if let Some(sort_by) = sort_by {
             if let Some(sort_order) = sort_order {
-                let sort_order = if sort_order == 1 {1} else {-1};
+                let sort_order = if sort_order == 1 { 1 } else { -1 };
                 doc! { sort_by: sort_order }
             } else {
                 doc! { sort_by: 1 }
@@ -119,7 +119,7 @@ impl DataBase {
         };
         let skip_size = (page - 1) * (limit as u64);
         let interval = interval.unwrap_or(String::from("hour"));
-        println!("{}",query);
+        println!("{}", query);
         if interval == "hour" {
             println!("{}", query);
             let mut cursor = self
@@ -198,8 +198,8 @@ impl DataBase {
                 "units": 1,
                 "pool" : 1
             }},
-            doc! { "$sort": sort_filter }, 
-            doc! { "$skip": skip_size as i64 }, 
+            doc! { "$sort": sort_filter },
+            doc! { "$skip": skip_size as i64 },
             doc! { "$limit": limit as i64 },
         ];
 
@@ -232,7 +232,7 @@ impl DataBase {
             page,
             sort_by,
             sort_order,
-            limit
+            limit,
         } = params;
 
         let seconds_per_interval = match interval.as_ref().unwrap().as_str() {
@@ -248,36 +248,39 @@ impl DataBase {
 
         if let Some(pool) = pool {
             // for now due to volume and computation constraints our swap history is confined to only BTC.BTC pool
-            if pool != "BTC.BTC"{
-                return Err(CustomError::InvalidInput("Swap history for only BTC.BTC available".to_string()));
+            if pool != "BTC.BTC" {
+                return Err(CustomError::InvalidInput(
+                    "Swap history for only BTC.BTC available".to_string(),
+                ));
             }
             query.insert("pool", pool);
         }
-        
+
         let limit: i16 = if let Some(limit) = limit { limit } else { 400 };
 
         if let Some(from) = from {
             query.insert("start_time", doc! { "$gte": from as i64 });
-        }
-        else{
-            let calc_start = if let Some(to) = to{
+        } else {
+            let calc_start = if let Some(to) = to {
                 to as i64
-            }else{
+            } else {
                 Utc::now().timestamp() as i64
             };
             let count = count.unwrap_or(400) as i64;
             let queried_interval_duration = seconds_per_interval as i64;
-            query.insert("start_time", doc! {"$gte": calc_start-(count*queried_interval_duration) as i64});
+            query.insert(
+                "start_time",
+                doc! {"$gte": calc_start-(count*queried_interval_duration) as i64},
+            );
         }
 
         if let Some(to) = to {
             query.insert("end_time", doc! { "$lte": to as i64 });
         }
 
-
         let sort_filter = if let Some(sort_by) = sort_by {
             if let Some(sort_order) = sort_order {
-                let sort_order = if sort_order == 1 {1} else {-1};
+                let sort_order = if sort_order == 1 { 1 } else { -1 };
                 doc! { sort_by: sort_order }
             } else {
                 doc! { sort_by: 1 }
@@ -287,7 +290,7 @@ impl DataBase {
         };
         let skip_size = (page - 1) * (limit as u64);
         let interval = interval.unwrap_or(String::from("hour"));
-        println!("{}",query);
+        println!("{}", query);
         if interval == "hour" {
             println!("{}", query);
             let mut cursor = self
@@ -370,7 +373,7 @@ impl DataBase {
                     "total_volume_usd": { "$last": "$total_volume_usd" }
                 }
             },
-            doc! { 
+            doc! {
                 "$project": {
                 "_id": 0,
                 "start_time": {
@@ -420,8 +423,8 @@ impl DataBase {
                 "total_volume": 1,
                 "total_volume_usd": 1
             }},
-            doc! { "$sort": sort_filter }, 
-            doc! { "$skip": skip_size as i64 }, 
+            doc! { "$sort": sort_filter },
+            doc! { "$skip": skip_size as i64 },
             doc! { "$limit": limit as i64 },
         ];
 
@@ -454,7 +457,7 @@ impl DataBase {
             page,
             sort_by,
             sort_order,
-            limit
+            limit,
         } = params;
 
         let seconds_per_interval = match interval.as_ref().unwrap().as_str() {
@@ -470,33 +473,36 @@ impl DataBase {
         let page = page.unwrap_or(1);
 
         if let Some(_pool) = pool {
-            return Err(CustomError::InvalidInput("Invalid parameter pool!".to_string()));
+            return Err(CustomError::InvalidInput(
+                "Invalid parameter pool!".to_string(),
+            ));
         }
-        
+
         let limit: i16 = if let Some(limit) = limit { limit } else { 400 };
 
         if let Some(from) = from {
             query.insert("start_time", doc! { "$gte": from as i64 });
-        }
-        else{
-            let calc_start = if let Some(to) = to{
+        } else {
+            let calc_start = if let Some(to) = to {
                 to as i64
-            }else{
+            } else {
                 Utc::now().timestamp() as i64
             };
             let count = count.unwrap_or(400) as i64;
             let queried_interval_duration = seconds_per_interval as i64;
-            query.insert("start_time", doc! {"$gte": calc_start-(count*queried_interval_duration) as i64});
+            query.insert(
+                "start_time",
+                doc! {"$gte": calc_start-(count*queried_interval_duration) as i64},
+            );
         }
 
         if let Some(to) = to {
             query.insert("end_time", doc! { "$lte": to as i64 });
         }
 
-
         let sort_filter = if let Some(sort_by) = sort_by {
             if let Some(sort_order) = sort_order {
-                let sort_order = if sort_order == 1 {1} else {-1};
+                let sort_order = if sort_order == 1 { 1 } else { -1 };
                 doc! { sort_by: sort_order }
             } else {
                 doc! { sort_by: 1 }
@@ -506,7 +512,7 @@ impl DataBase {
         };
         let skip_size = (page - 1) * (limit as u64);
         let interval = interval.unwrap_or(String::from("hour"));
-        println!("{}",query);
+        println!("{}", query);
         if interval == "hour" {
             println!("{}", query);
             let mut cursor = self
@@ -568,8 +574,8 @@ impl DataBase {
                 "count" : 1,
                 "units" : 1
             }},
-            doc! { "$sort": sort_filter }, 
-            doc! { "$skip": skip_size as i64 }, 
+            doc! { "$sort": sort_filter },
+            doc! { "$skip": skip_size as i64 },
             doc! { "$limit": limit as i64 },
         ];
 
