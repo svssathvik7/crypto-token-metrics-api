@@ -7,18 +7,17 @@ use crate::{models::depth_history_model::PoolDepthPriceHistory, services::db::Da
 pub struct QueryParams{
     pub pool : Option<String>,
     pub interval : Option<String>,
-    pub count : Option<u16>,
+    pub count : Option<u32>,
     pub to : Option<u64>,
-    pub from : Option<u64>
+    pub from : Option<u64>,
+    pub page : Option<u64>,
+    pub sort_by : Option<String>,
+    pub sort_order : Option<String> 
 }
 
-#[actix_web::get("/")]
+#[actix_web::get("")]
 pub async fn get_depth_price_history(db:web::Data<DataBase>,params:web::Query<QueryParams>) -> impl Responder{
-    let QueryParams {pool,interval,count,to,from} = params.into_inner();
-    if pool.is_none() && interval.is_none() && count.is_none() && to.is_none() && from.is_none() {
-        println!("No parameters sent");
-        return HttpResponse::BadRequest().body("No parameters sent");
-    }
+    db.get_depth_price_history_api(params.into_inner()).await;
     HttpResponse::Ok().body(())
 }
 

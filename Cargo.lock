@@ -2481,6 +2481,7 @@ dependencies = [
  "actix-web",
  "chrono",
  "dotenv",
+ "futures-util",
  "mongodb",
  "reqwest",
  "serde",
