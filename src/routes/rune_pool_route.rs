@@ -1,7 +1,23 @@
 use actix_web::{web::{self, ServiceConfig}, HttpResponse, Responder};
 use chrono::Utc;
+use crate::{models::{api_request_param_model::{validate_query, QueryParams}, rune_pool_model::RunePool}, services::db::DataBase};
 
-use crate::{models::rune_pool_model::RunePool, services::db::DataBase};
+
+#[actix_web::get("")]
+pub async fn get_rune_pool_history(db:web::Data<DataBase>,params:web::Query<QueryParams>) -> HttpResponse{
+    if let Err(validation_err) = validate_query(&params) {
+        return validation_err;
+    }
+    match db.get_rune_pool_history_api(params.into_inner()).await {
+        Ok(result) => HttpResponse::Ok().json(result),
+        Err(e) => {
+            eprint!("Error at /runepool {:?}",e);
+            HttpResponse::InternalServerError().json(e)
+        }
+    }
+}
+
+
 // Protected route
 // Expensive function
 #[actix_web::get("/fetch-rune-pools-all")]
@@ -26,6 +42,6 @@ async fn fetch_all_rune_pools_to_db(db:web::Data<DataBase>) -> impl Responder{
 }
 
 pub fn init(config:&mut ServiceConfig){
-    config.service(fetch_all_rune_pools_to_db);
+    config.service(fetch_all_rune_pools_to_db).service(get_rune_pool_history);
     ()
 }
