@@ -156,13 +156,12 @@ impl SwapHistory{
     }
     pub async fn fetch_swap_history(db:&DataBase,pool:&str,interval:&str,count:&str,from:&str) -> Result<i64,reqwestError>{
         let url = generate_api_url(&pool,&interval, &from, &count);
-        print!("url - {}",url);
+        println!("url - {}",url);
         let response: ApiResponse = reqwest::get(&url).await?.json::<ApiResponse>().await?;
         
-        println!("{:?}",response);
         let end_time = response.meta.endTime.clone();
         let end_time = end_time.parse::<i64>().unwrap();
-        self::SwapHistory::store_swap_history(db, pool, response);
+        self::SwapHistory::store_swap_history(db, pool, response).await;
         Ok(end_time)
     }
 }
