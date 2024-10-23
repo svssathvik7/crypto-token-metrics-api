@@ -4,10 +4,9 @@ use chrono::Utc;
 use dotenv::dotenv;
 use futures_util::StreamExt;
 use mongodb::bson::Document;
-use mongodb::error::Error as mongoError;
 use mongodb::{bson::doc, Client, Collection};
-use serde::{Deserialize, Serialize};
 
+use crate::models::custom_error_model::CustomError;
 use crate::{
     models::{
         depth_history_model::PoolDepthPriceHistory,
@@ -18,16 +17,6 @@ use crate::{
     routes::depth_route::QueryParams,
 };
 
-#[derive(Debug, Serialize, Deserialize)]
-pub enum MyError {
-    InvalidInput(String),
-    DatabaseError(String),
-}
-impl From<mongoError> for MyError {
-    fn from(err: mongoError) -> Self {
-        MyError::DatabaseError(err.to_string())
-    }
-}
 
 pub struct DataBase {
     pub depth_history: Collection<PoolDepthPriceHistory>,
@@ -63,7 +52,7 @@ impl DataBase {
     pub async fn get_depth_price_history_api(
         &self,
         params: QueryParams,
-    ) -> Result<Vec<Document>, MyError> {
+    ) -> Result<Vec<Document>, CustomError> {
         let mut query = doc! {};
         let QueryParams {
             pool,
@@ -89,11 +78,6 @@ impl DataBase {
         let page = page.unwrap_or(1);
 
         if let Some(pool) = pool {
-            if pool != "BTC.BTC" {
-                return Err(MyError::InvalidInput(
-                    "Currently we only work for BTC.BTC depths and earning history".to_string(),
-                ));
-            }
             query.insert("pool", pool);
         }
         
