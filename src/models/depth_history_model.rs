@@ -1,13 +1,8 @@
 use std::error::Error as stdError;
 use mongodb::bson::oid::ObjectId;
-use mongodb::error::Error as mongoError;
-use reqwest::Error as reqwestError;
+
 use serde::{Deserialize, Serialize};
 use crate::services::{db::DataBase, depth_history_service::{ApiResponse, Interval}};
-// due to volume issues we are sticking to BTC BTC pool type
-fn generate_api_url(pool:String,interval:String,from:String,count:String) -> String{
-    format!("https://midgard.ninerealms.com/v2/history/depths/{}?interval={}&from={}&count={}",pool,interval,from,count)
-}
 
 fn generate_error_text(field_name:String) -> String{
     format!("Incorrect {} format",field_name)
@@ -16,7 +11,7 @@ fn generate_error_text(field_name:String) -> String{
 #[derive(Deserialize,Serialize,Debug)]
 pub struct PoolDepthPriceHistory{
     pub _id : ObjectId,
-    pub name : String,
+    pub pool : String,
     pub asset_depth : f64,
     pub asset_price : f64,
     pub asset_price_usd : f64,
@@ -35,7 +30,7 @@ impl TryFrom<Interval> for PoolDepthPriceHistory{
     type Error = Box<dyn stdError>;
     fn try_from(value: Interval) -> Result<Self, Self::Error> {
         let _id = ObjectId::new();
-        let name = String::from("BTC.BTC");
+        let pool = String::from("BTC.BTC");
         let asset_depth = value.assetDepth.parse::<f64>().expect(&generate_error_text(value.assetDepth));
         let asset_price = value.assetPrice.parse::<f64>().expect(&generate_error_text(value.assetPrice));
         let asset_price_usd = value.assetPriceUSD.parse::<f64>().expect(&generate_error_text(value.assetPriceUSD));
@@ -50,7 +45,7 @@ impl TryFrom<Interval> for PoolDepthPriceHistory{
         let units = value.units.parse::<f64>().expect(&generate_error_text(value.units));
         let pool_price_document = PoolDepthPriceHistory {
             _id,
-            name,
+            pool,
             asset_depth,
             asset_price,
             asset_price_usd,
@@ -68,31 +63,3 @@ impl TryFrom<Interval> for PoolDepthPriceHistory{
     }
 }
 
-impl PoolDepthPriceHistory{
-    pub async fn store_price_history(db: &DataBase, data: ApiResponse) -> Result<(), mongoError> {
-        for interval in data.intervals {
-            match PoolDepthPriceHistory::try_from(interval) {
-                Ok(pool_history_interval) => {
-                    if let Err(e) = db.depth_history.insert_one(pool_history_interval).await {
-                        eprint!("Error inserting record: {:?}", e);
-                        return Err(e);  // Return error if insertion fails
-                    }
-                }
-                Err(e) => {
-                    eprint!("Error writing pool history to db: {:?}", e);
-                }
-            }
-        }
-        Ok(())
-    }
-    pub async fn fetch_price_history(db:&DataBase,pool:String,interval:String,count:String,from:String) -> Result<i64,reqwestError>{
-        let url = generate_api_url(pool,interval,from,count);
-        println!("{}",url);
-        let response = reqwest::get(&url).await?.json::<ApiResponse>().await?;
-        // println!("{:?}",response);
-        let end_time = response.meta.endTime.clone();
-        let end_time = end_time.parse::<i64>().unwrap();
-        self::PoolDepthPriceHistory::store_price_history(db,response).await;
-        Ok(end_time)
-    }
-}
