@@ -1,5 +1,6 @@
 use actix_web::{self, web::{scope, Data}, App, HttpServer};
-use routes::{depth_route::{self, fetch_all_depths_to_db}, earning_route::fetch_all_earnings_to_db, rune_pool_route::{self, fetch_all_rune_pools_to_db}, swap_route::fetch_all_swaps_to_db};
+
+use routes::{depth_route, earning_route::fetch_all_earnings_to_db, rune_pool_route, swap_route::fetch_all_swaps_to_db};
 use services::db::DataBase;
 pub mod services;
 pub mod models;
