@@ -439,4 +439,152 @@ impl DataBase {
         // println!("{:?}",query_response);
         Ok(query_response)
     }
+
+    pub async fn get_rune_pool_history_api(
+        &self,
+        params: QueryParams,
+    ) -> Result<Vec<Document>, CustomError> {
+        let mut query = doc! {};
+        let QueryParams {
+            pool,
+            interval,
+            count,
+            to,
+            from,
+            page,
+            sort_by,
+            sort_order,
+            limit
+        } = params;
+
+        let seconds_per_interval = match interval.as_ref().unwrap().as_str() {
+            "hour" => 3600,
+            "day" => 86_400,
+            "week" => 604_800,
+            "month" => 2_678_400,
+            "quarter" => 7_948_800,
+            "year" => 31_622_400,
+            _ => 3_600,
+        };
+
+        let page = page.unwrap_or(1);
+
+        if let Some(_pool) = pool {
+            return Err(CustomError::InvalidInput("Invalid parameter pool!".to_string()));
+        }
+        
+        let limit: i16 = if let Some(limit) = limit { limit } else { 400 };
+
+        if let Some(from) = from {
+            query.insert("start_time", doc! { "$gte": from as i64 });
+        }
+        else{
+            let calc_start = if let Some(to) = to{
+                to as i64
+            }else{
+                Utc::now().timestamp() as i64
+            };
+            let count = count.unwrap_or(400) as i64;
+            let queried_interval_duration = seconds_per_interval as i64;
+            query.insert("start_time", doc! {"$gte": calc_start-(count*queried_interval_duration) as i64});
+        }
+
+        if let Some(to) = to {
+            query.insert("end_time", doc! { "$lte": to as i64 });
+        }
+
+
+        let sort_filter = if let Some(sort_by) = sort_by {
+            if let Some(sort_order) = sort_order {
+                let sort_order = if sort_order == 1 {1} else {-1};
+                doc! { sort_by: sort_order }
+            } else {
+                doc! { sort_by: 1 }
+            }
+        } else {
+            doc! { "end_time": -1 }
+        };
+        let skip_size = (page - 1) * (limit as u64);
+        let interval = interval.unwrap_or(String::from("hour"));
+        println!("{}",query);
+        if interval == "hour" {
+            println!("{}", query);
+            let mut cursor = self
+                .rune_pool_history
+                .find(query)
+                .skip(skip_size as u64)
+                .limit(limit as i64)
+                .sort(sort_filter)
+                .await?;
+
+            let mut query_response = Vec::new();
+
+            while let Some(result) = cursor.next().await {
+                match result {
+                    Ok(record) => {
+                        let mut record = mongodb::bson::to_document(&record)
+                            .expect("Error parsing the document");
+                        record.remove("_id");
+                        query_response.push(record);
+                    }
+                    Err(e) => {
+                        eprintln!("Failed fetching data! {}", e);
+                    }
+                }
+            }
+            // println!("{:?}",query_response);
+            return Ok(query_response);
+        }
+        let pipeline = vec![
+            doc! { "$match": query }, // Match stage
+            doc! {
+                "$group": {
+                    "_id": {
+                        "interval_start": {
+                            "$subtract": [
+                                { "$add": ["$end_time", 1] },
+                                { "$mod": [
+                                    { "$subtract": ["$end_time", 1] },
+                                    seconds_per_interval
+                                ]}
+                            ]
+                        }
+                    },
+                    "count": { "$last": "$count" },
+                    "units": { "$last": "$units" },
+                }
+            },
+            doc! { "$project": {
+                "_id": 0,
+                "start_time": {
+                    "$subtract": [ "$_id.interval_start", { "$mod": [ "$_id.interval_start", seconds_per_interval ] }]
+                },
+                "end_time": {
+                    "$add": [
+                        { "$subtract": [ "$_id.interval_start", { "$mod": [ "$_id.interval_start", seconds_per_interval ] }] },
+                        seconds_per_interval
+                    ]
+                },
+                "count" : 1,
+                "units" : 1
+            }},
+            doc! { "$sort": sort_filter }, 
+            doc! { "$skip": skip_size as i64 }, 
+            doc! { "$limit": limit as i64 },
+        ];
+
+        let mut cursor = self.rune_pool_history.aggregate(pipeline).await?;
+        let mut query_response = Vec::new();
+        while let Some(result) = cursor.next().await {
+            match result {
+                Ok(mut record) => {
+                    record.remove("_id");
+                    query_response.push(record);
+                }
+                Err(e) => eprintln!("Error fetching document: {:?}", e),
+            }
+        }
+        // println!("{:?}",query_response);
+        Ok(query_response)
+    }
 }
