@@ -1,7 +1,7 @@
 use actix_web::{web::{self, ServiceConfig}, HttpResponse, Responder};
 use chrono::Utc;
 
-use crate::{models::{depth_history_model::PoolDepthPriceHistory, swap_history_model::SwapHistory}, services::db::DataBase};
+use crate::{models::swap_history_model::SwapHistory, services::db::DataBase};
 
 // Protected route
 // Expensive function

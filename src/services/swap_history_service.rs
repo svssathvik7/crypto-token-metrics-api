@@ -9,10 +9,6 @@ fn generate_api_url(pool:&str,interval:&str,from:&str,count:&str) -> String{
     format!("https://midgard.ninerealms.com/v2/history/swaps?pool={}&interval={}&from={}&count={}",pool,interval,from,count)
 }
 
-fn generate_error_text(field_name:&str) -> String{
-    format!("Incorrect {} format",field_name)
-}
-
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Meta {
     pub startTime: String,
