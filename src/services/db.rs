@@ -1,17 +1,27 @@
-use std::env;
+use std::{cmp, env};
 
+use chrono::Utc;
 use dotenv::dotenv;
 use futures_util::StreamExt;
 use mongodb::bson::{Bson, Document};
 use mongodb::error::Error as mongoError;
 use mongodb::{bson::doc, Client, Collection};
+use serde::{Deserialize, Serialize};
 
-use crate::{models::{depth_history_model::PoolDepthPriceHistory, earning_history_model::{PoolEarningHistory, PoolEarningSummary}, rune_pool_model::RunePool, swap_history_model::SwapHistory}, routes::depth_route::QueryParams};
+use crate::{
+    models::{
+        depth_history_model::PoolDepthPriceHistory,
+        earning_history_model::{PoolEarningHistory, PoolEarningSummary},
+        rune_pool_model::RunePool,
+        swap_history_model::SwapHistory,
+    },
+    routes::depth_route::QueryParams,
+};
 
-#[derive(Debug)]
+#[derive(Debug, Serialize, Deserialize)]
 pub enum MyError {
     InvalidInput(String),
-    DatabaseError(String)
+    DatabaseError(String),
 }
 impl From<mongoError> for MyError {
     fn from(err: mongoError) -> Self {
@@ -50,7 +60,10 @@ impl DataBase {
     }
 
     // /depths
-    pub async fn get_depth_price_history_api(&self, params: QueryParams) -> Result<Vec<Document>, MyError> {
+    pub async fn get_depth_price_history_api(
+        &self,
+        params: QueryParams,
+    ) -> Result<Vec<Document>, MyError> {
         let mut query = doc! {};
         let QueryParams {
             pool,
@@ -63,6 +76,15 @@ impl DataBase {
             sort_order,
         } = params;
 
+        let seconds_per_interval = match interval.as_ref().unwrap().as_str() {
+            "hour" => 3600,
+            "day" => 86_400,
+            "week" => 604_800,
+            "month" => 2_678_400,
+            "year" => 31_622_400,
+            _ => 3_600,
+        };
+
         let page = page.unwrap_or(1);
 
         if let Some(pool) = pool {
@@ -73,6 +95,8 @@ impl DataBase {
             }
             query.insert("pool", pool);
         }
+        
+        let limit: u32 = if let Some(count) = count { count } else { 400 };
 
         if let Some(from) = from {
             query.insert("start_time", doc! { "$gte": from as i64 });
@@ -82,11 +106,6 @@ impl DataBase {
             query.insert("end_time", doc! { "$lte": to as i64 });
         }
 
-        let limit: u32 = if let Some(count) = count {
-            count
-        }else{
-            400
-        };
 
         let sort_filter = if let Some(sort_by) = sort_by {
             if let Some(sort_order) = sort_order {
@@ -97,10 +116,11 @@ impl DataBase {
         } else {
             doc! { "end_time": -1 }
         };
-        let skip_size = (page-1)*(limit as u64);
+        let skip_size = (page - 1) * (limit as u64);
         let interval = interval.unwrap_or(String::from("hour"));
+        println!("{}",query);
         if interval == "hour" {
-            println!("{}",query);
+            println!("{}", query);
             let mut cursor = self
                 .depth_history
                 .find(query)
@@ -114,7 +134,8 @@ impl DataBase {
             while let Some(result) = cursor.next().await {
                 match result {
                     Ok(record) => {
-                        let mut record = mongodb::bson::to_document(&record).expect("Error parsing the document");
+                        let mut record = mongodb::bson::to_document(&record)
+                            .expect("Error parsing the document");
                         record.remove("_id");
                         query_response.push(record);
                     }
@@ -126,40 +147,32 @@ impl DataBase {
             // println!("{:?}",query_response);
             return Ok(query_response);
         }
-        let seconds_per_interval = match interval.as_str() {
-            "hour" => 3600,
-            "day" => 86_400,
-            "week" => 604_800,
-            "month" => 2_678_400,
-            "year" => 31_622_400,
-            _ => 3_600
-        };
         let pipeline = vec![
-            doc! {"$match" : query},
+            doc! { "$match": query }, // Match stage
             doc! {
-                "$group" : {
-                    "_id" : {
-                        "interval_start" : {
-                            "$subtract" : [
-                                { "$add": ["$end_time", 1] }, 
-                                { "$mod": [ 
-                                    { "$subtract": ["$end_time", 1] },  
-                                    seconds_per_interval 
+                "$group": {
+                    "_id": {
+                        "interval_start": {
+                            "$subtract": [
+                                { "$add": ["$end_time", 1] },
+                                { "$mod": [
+                                    { "$subtract": ["$end_time", 1] },
+                                    seconds_per_interval
                                 ]}
                             ]
                         }
-                    }
-                },
-                "avg_asset_depth": { "$avg": "$asset_depth" },
-                "avg_asset_price": { "$avg": "$asset_price" },
-                "avg_asset_price_usd": { "$avg": "$asset_price_usd" },
-                "avg_liquidity_units": { "$avg": "$liquidity_units" },
-                "avg_luvi": { "$avg": "$luvi" },
-                "avg_members_count": { "$avg": "$members_count" },
-                "avg_rune_depth": { "$avg": "$rune_depth" },
-                "avg_synth_supply": { "$avg": "$synth_supply" },
-                "avg_synth_units": { "$avg": "$synth_units" },
-                "avg_units": { "$avg": "$units" }
+                    },
+                    "asset_depth": { "$last": "$asset_depth" },
+                    "asset_price": { "$last": "$asset_price" },
+                    "asset_price_usd": { "$last": "$asset_price_usd" },
+                    "liquidity_units": { "$last": "$liquidity_units" },
+                    "luvi": { "$last": "$luvi" },
+                    "members_count": { "$last": "$members_count" },
+                    "rune_depth": { "$last": "$rune_depth" },
+                    "synth_supply": { "$last": "$synth_supply" },
+                    "synth_units": { "$last": "$synth_units" },
+                    "units": { "$last": "$units" }
+                }
             },
             doc! { "$project": {
                 "_id": 0,
@@ -171,23 +184,36 @@ impl DataBase {
                         { "$subtract": [ "$_id.interval_start", { "$mod": [ "$_id.interval_start", seconds_per_interval ] }] },
                         seconds_per_interval
                     ]
-                }
+                },
+                "asset_depth": 1,
+                "asset_price": 1,
+                "asset_price_usd": 1,
+                "liquidity_units": 1,
+                "luvi": 1,
+                "members_count": 1,
+                "rune_depth": 1,
+                "synth_supply": 1,
+                "synth_units": 1,
+                "units": 1,
+                "pool" : 1
             }},
-            doc! { "$sort": sort_filter },
-            doc! { "$skip": skip_size as i64 },
-            doc! { "$limit": limit as i64 },                   
+            doc! { "$sort": sort_filter }, 
+            doc! { "$skip": skip_size as i64 }, 
+            doc! { "$limit": limit as i64 },
         ];
+
         let mut cursor = self.depth_history.aggregate(pipeline).await?;
         let mut query_response = Vec::new();
         while let Some(result) = cursor.next().await {
             match result {
                 Ok(mut record) => {
-                    record.remove("_id");  
+                    record.remove("_id");
                     query_response.push(record);
-                },
+                }
                 Err(e) => eprintln!("Error fetching document: {:?}", e),
             }
         }
+        // println!("{:?}",query_response);
         Ok(query_response)
     }
 }

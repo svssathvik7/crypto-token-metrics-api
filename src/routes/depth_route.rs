@@ -17,8 +17,13 @@ pub struct QueryParams{
 
 #[actix_web::get("")]
 pub async fn get_depth_price_history(db:web::Data<DataBase>,params:web::Query<QueryParams>) -> impl Responder{
-    db.get_depth_price_history_api(params.into_inner()).await;
-    HttpResponse::Ok().body(())
+    match db.get_depth_price_history_api(params.into_inner()).await {
+        Ok(result) => HttpResponse::Ok().json(result),
+        Err(e) => {
+            eprint!("Error at /depths {:?}",e);
+            HttpResponse::InternalServerError().json(e)
+        }
+    }
 }
 
 // Protected route
