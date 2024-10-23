@@ -3,13 +3,14 @@ use std::{collections, env};
 use dotenv::dotenv;
 use mongodb::{Client, Collection};
 
-use crate::models::{depth_history_model::PoolDepthPriceHistory, earning_history_model::{PoolEarningHistory, PoolEarningSummary}, swap_history_model::SwapHistory};
+use crate::models::{depth_history_model::PoolDepthPriceHistory, earning_history_model::{PoolEarningHistory, PoolEarningSummary}, rune_pool_model::RunePool, swap_history_model::SwapHistory};
 
 pub struct DataBase{
     pub depth_history: Collection<PoolDepthPriceHistory>,
     pub earnings : Collection<PoolEarningHistory>,
     pub earnings_summary : Collection<PoolEarningSummary>,
-    pub swap_history : Collection<SwapHistory>
+    pub swap_history : Collection<SwapHistory>,
+    pub rune_pool_history : Collection<RunePool>
 }
 
 impl DataBase{
@@ -23,11 +24,13 @@ impl DataBase{
         let earnings_collection = db.collection("earnings");
         let earning_summary_collection = db.collection("earnings_summary");
         let swap_history_collection = db.collection("swap_history");
+        let rune_pool_collection = db.collection("rune_pool_history");
         DataBase{
             depth_history : depth_history_collection,
             earnings : earnings_collection,
             earnings_summary : earning_summary_collection,
-            swap_history : swap_history_collection
+            swap_history : swap_history_collection,
+            rune_pool_history : rune_pool_collection
         }
     }
 }
