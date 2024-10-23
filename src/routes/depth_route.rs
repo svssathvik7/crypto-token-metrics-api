@@ -12,6 +12,15 @@ pub struct QueryParams{
     pub from : Option<u64>
 }
 
+#[actix_web::get("/")]
+pub async fn get_depth_price_history(db:web::Data<DataBase>,params:web::Query<QueryParams>) -> impl Responder{
+    let QueryParams {pool,interval,count,to,from} = params.into_inner();
+    if pool.is_none() && interval.is_none() && count.is_none() && to.is_none() && from.is_none() {
+        println!("No parameters sent");
+        return HttpResponse::BadRequest().body("No parameters sent");
+    }
+    HttpResponse::Ok().body(())
+}
 
 // Protected route
 // Expensive function
@@ -37,6 +46,6 @@ pub async fn fetch_all_depths_to_db(db:web::Data<DataBase>) -> impl Responder{
 }
 
 pub fn init(config:&mut ServiceConfig){
-    config.service(fetch_all_depths_to_db);
+    config.service(fetch_all_depths_to_db).service(get_depth_price_history);
     ()
 }
