@@ -4,9 +4,9 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Debug,Serialize,Deserialize)]
 pub struct RunePool{
-    _id : ObjectId,
-    count : f64,
-    end_time : i64,
-    start_time : i64,
-    units : f64
+    pub _id : ObjectId,
+    pub count : f64,
+    pub end_time : i64,
+    pub start_time : i64,
+    pub units : f64
 }
