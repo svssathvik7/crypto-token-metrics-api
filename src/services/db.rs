@@ -2,6 +2,7 @@ use std::env;
 
 use dotenv::dotenv;
 use futures_util::StreamExt;
+use mongodb::bson::{Bson, Document};
 use mongodb::error::Error as mongoError;
 use mongodb::{bson::doc, Client, Collection};
 
@@ -49,7 +50,7 @@ impl DataBase {
     }
 
     // /depths
-    pub async fn get_depth_price_history_api(&self, params: QueryParams) -> Result<(), MyError> {
+    pub async fn get_depth_price_history_api(&self, params: QueryParams) -> Result<Vec<Document>, MyError> {
         let mut query = doc! {};
         let QueryParams {
             pool,
@@ -113,6 +114,8 @@ impl DataBase {
             while let Some(result) = cursor.next().await {
                 match result {
                     Ok(record) => {
+                        let mut record = mongodb::bson::to_document(&record).expect("Error parsing the document");
+                        record.remove("_id");
                         query_response.push(record);
                     }
                     Err(e) => {
@@ -121,8 +124,70 @@ impl DataBase {
                 }
             }
             // println!("{:?}",query_response);
- 
+            return Ok(query_response);
         }
-        Ok(())
+        let seconds_per_interval = match interval.as_str() {
+            "hour" => 3600,
+            "day" => 86_400,
+            "week" => 604_800,
+            "month" => 2_678_400,
+            "year" => 31_622_400,
+            _ => 3_600
+        };
+        let pipeline = vec![
+            doc! {"$match" : query},
+            doc! {
+                "$group" : {
+                    "_id" : {
+                        "interval_start" : {
+                            "$subtract" : [
+                                { "$add": ["$end_time", 1] }, 
+                                { "$mod": [ 
+                                    { "$subtract": ["$end_time", 1] },  
+                                    seconds_per_interval 
+                                ]}
+                            ]
+                        }
+                    }
+                },
+                "avg_asset_depth": { "$avg": "$asset_depth" },
+                "avg_asset_price": { "$avg": "$asset_price" },
+                "avg_asset_price_usd": { "$avg": "$asset_price_usd" },
+                "avg_liquidity_units": { "$avg": "$liquidity_units" },
+                "avg_luvi": { "$avg": "$luvi" },
+                "avg_members_count": { "$avg": "$members_count" },
+                "avg_rune_depth": { "$avg": "$rune_depth" },
+                "avg_synth_supply": { "$avg": "$synth_supply" },
+                "avg_synth_units": { "$avg": "$synth_units" },
+                "avg_units": { "$avg": "$units" }
+            },
+            doc! { "$project": {
+                "_id": 0,
+                "start_time": {
+                    "$subtract": [ "$_id.interval_start", { "$mod": [ "$_id.interval_start", seconds_per_interval ] }]
+                },
+                "end_time": {
+                    "$add": [
+                        { "$subtract": [ "$_id.interval_start", { "$mod": [ "$_id.interval_start", seconds_per_interval ] }] },
+                        seconds_per_interval
+                    ]
+                }
+            }},
+            doc! { "$sort": sort_filter },
+            doc! { "$skip": skip_size as i64 },
+            doc! { "$limit": limit as i64 },                   
+        ];
+        let mut cursor = self.depth_history.aggregate(pipeline).await?;
+        let mut query_response = Vec::new();
+        while let Some(result) = cursor.next().await {
+            match result {
+                Ok(mut record) => {
+                    record.remove("_id");  
+                    query_response.push(record);
+                },
+                Err(e) => eprintln!("Error fetching document: {:?}", e),
+            }
+        }
+        Ok(query_response)
     }
 }
