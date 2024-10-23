@@ -1,9 +1,9 @@
-use std::{cmp, env};
+use std::env;
 
 use chrono::Utc;
 use dotenv::dotenv;
 use futures_util::StreamExt;
-use mongodb::bson::{Bson, Document};
+use mongodb::bson::Document;
 use mongodb::error::Error as mongoError;
 use mongodb::{bson::doc, Client, Collection};
 use serde::{Deserialize, Serialize};
