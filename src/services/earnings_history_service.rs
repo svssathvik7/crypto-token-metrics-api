@@ -66,11 +66,11 @@ impl PoolEarningHistory{
             let _id = ObjectId::new();
     
             let avg_node_count = interval.avgNodeCount.parse::<f64>().expect(&generate_error_text(interval.avgNodeCount));
-            let block_rewards = interval.blockRewards.parse::<u64>().expect(&generate_error_text(interval.blockRewards));
-            let bonding_earnings = interval.bondingEarnings.parse::<u64>().expect(&generate_error_text(interval.bondingEarnings));
+            let block_rewards = interval.blockRewards.parse::<f64>().expect(&generate_error_text(interval.blockRewards));
+            let bonding_earnings = interval.bondingEarnings.parse::<f64>().expect(&generate_error_text(interval.bondingEarnings));
             let earnings = interval.earnings.parse::<u64>().expect(&generate_error_text(interval.earnings));
             let end_time = interval.endTime.as_str().parse::<i64>().expect(&generate_error_text(interval.endTime.clone()));
-            let liquidity_earnings = interval.liquidityEarnings.parse::<u64>().expect(&generate_error_text(interval.liquidityEarnings));
+            let liquidity_earnings = interval.liquidityEarnings.parse::<f64>().expect(&generate_error_text(interval.liquidityEarnings));
             let liquidity_fees = interval.liquidityFees.parse::<u64>().expect(&generate_error_text(interval.liquidityFees));
             let start_time = interval.startTime.as_str().parse::<i64>().expect(&generate_error_text(interval.startTime.clone()));
             let rune_price_usd = interval.runePriceUSD.parse::<f64>().expect(&generate_error_text(interval.runePriceUSD));
@@ -89,17 +89,21 @@ impl PoolEarningHistory{
             };
     
             let earnings_summary_id = db.earnings_summary.insert_one(pool_earning_summary).await.unwrap().inserted_id;
-    
+            let mut check = true;
             for pool in interval.pools {
+                if check{
+                    println!("{:?}",pool);
+                }
+                check = false;
                 let pool_earnings = PoolEarningHistory {
                     _id: ObjectId::new(),
                     pool: pool.pool.clone(),
-                    asset_liquidity_fees: pool.assetLiquidityFees.parse::<u64>().expect(&generate_error_text(pool.assetLiquidityFees)),
+                    asset_liquidity_fees: pool.assetLiquidityFees.parse::<f64>().expect(&generate_error_text(pool.assetLiquidityFees)),
                     earning: pool.earnings.parse::<u64>().expect(&generate_error_text(pool.earnings)),
-                    rewards: pool.rewards.parse::<u64>().expect(&generate_error_text(pool.rewards)),
-                    rune_liquidity_fees: pool.runeLiquidityFees.parse::<u64>().expect(&generate_error_text(pool.runeLiquidityFees)),
-                    saver_earning: pool.saverEarning.parse::<u64>().expect(&generate_error_text(pool.saverEarning)),
-                    total_liquidity_fees_rune: pool.totalLiquidityFeesRune.parse::<u64>().expect(&generate_error_text(pool.totalLiquidityFeesRune)),
+                    rewards: pool.rewards.parse::<f64>().expect(&generate_error_text(pool.rewards)),
+                    rune_liquidity_fees: pool.runeLiquidityFees.parse::<f64>().expect(&generate_error_text(pool.runeLiquidityFees)),
+                    saver_earning: pool.saverEarning.parse::<f64>().expect(&generate_error_text(pool.saverEarning)),
+                    total_liquidity_fees_rune: pool.totalLiquidityFeesRune.parse::<f64>().expect(&generate_error_text(pool.totalLiquidityFeesRune)),
                     start_time: interval.startTime.as_str().parse::<i64>().expect(&generate_error_text(interval.startTime.clone())),
                     end_time: interval.endTime.as_str().parse::<i64>().expect(&generate_error_text(interval.endTime.clone())),
                     earnings_summary: earnings_summary_id.as_object_id().expect(&generate_error_text("earning summary id".to_string())),
