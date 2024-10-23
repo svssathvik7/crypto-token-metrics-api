@@ -5,7 +5,7 @@ use crate::models::swap_history_model::SwapHistory;
 use reqwest::Error as reqwestError;
 use super::db::DataBase;
 
-fn generate_api_url(pool:String,interval:String,from:String,count:String) -> String{
+fn generate_api_url(pool:&str,interval:&str,from:&str,count:&str) -> String{
     format!("https://midgard.ninerealms.com/v2/history/swaps?pool={}&interval={}&from={}&count={}",pool,interval,from,count)
 }
 
@@ -154,14 +154,15 @@ impl SwapHistory{
             }
         }
     }
-    pub async fn fetch_swap_history(db:&DataBase,pool:String,interval:String,count:String,from:String) -> Result<i64,reqwestError>{
-        let url = generate_api_url(pool,interval, from, count);
+    pub async fn fetch_swap_history(db:&DataBase,pool:&str,interval:&str,count:&str,from:&str) -> Result<i64,reqwestError>{
+        let url = generate_api_url(&pool,&interval, &from, &count);
         print!("url - {}",url);
         let response: ApiResponse = reqwest::get(&url).await?.json::<ApiResponse>().await?;
         
         println!("{:?}",response);
         let end_time = response.meta.endTime.clone();
         let end_time = end_time.parse::<i64>().unwrap();
+        self::SwapHistory::store_swap_history(db, pool, response);
         Ok(end_time)
     }
 }

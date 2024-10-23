@@ -11,7 +11,7 @@ pub async fn fetch_all_swaps_to_db(db:web::Data<DataBase>) -> impl Responder{
     // epoch value of the api's start derived from the midgard metadata
     let mut start = 1647913096;
     loop {
-        let end_time = match SwapHistory::fetch_swap_history(db.get_ref(), String::from("BTC.BTC"), String::from("hour"), String::from("400"), start.to_string()).await {
+        let end_time = match SwapHistory::fetch_swap_history(db.get_ref(), "BTC.BTC", "hour", "400", &start.to_string()).await {
             Ok(response) => response,
             Err(e) => {
                 println!("Failed to fetch and update db with swap history! {:?}\n",e);
