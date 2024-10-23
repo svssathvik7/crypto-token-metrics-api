@@ -100,8 +100,13 @@ impl DataBase {
 
         if let Some(from) = from {
             query.insert("start_time", doc! { "$gte": from as i64 });
-        }else{
-            let calc_start = Utc::now().timestamp() as i64;
+        }
+        else{
+            let calc_start = if let Some(to) = to{
+                to as i64
+            }else{
+                Utc::now().timestamp() as i64
+            };
             let count = count.unwrap_or(400) as i64;
             let queried_interval_duration = seconds_per_interval as i64;
             query.insert("start_time", doc! {"$gte": calc_start-(count*queried_interval_duration) as i64});
