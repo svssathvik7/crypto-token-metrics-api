@@ -48,7 +48,7 @@ impl RunePool{
                 units : interval.units.parse::<f64>().expect(&generate_error_text("untis"))
             };
             match db.rune_pool_history.insert_one(rune_pool_obj).await {
-                Ok(_record) => print!("Rune pool record writted to db!"),
+                Ok(_record) => println!("Rune pool record writted to db!"),
                 Err(e) => eprint!("Err adding rune pool to db {}",e)
             }
         }
