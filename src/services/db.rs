@@ -15,6 +15,18 @@ use crate::models::{
     swap_history_model::SwapHistory,
 };
 
+pub fn get_seconds_per_interval(interval:&str) -> i32{
+    match interval {
+        "hour" => 3600,
+        "day" => 86_400,
+        "week" => 604_800,
+        "month" => 2_678_400,
+        "quarter" => 7_948_800,
+        "year" => 31_622_400,
+        _ => 3_600,
+    }
+}
+
 pub struct DataBase {
     pub depth_history: Collection<PoolDepthPriceHistory>,
     pub earnings: Collection<PoolEarningHistory>,
@@ -63,15 +75,7 @@ impl DataBase {
             limit,
         } = params;
 
-        let seconds_per_interval = match interval.as_ref().unwrap().as_str() {
-            "hour" => 3600,
-            "day" => 86_400,
-            "week" => 604_800,
-            "month" => 2_678_400,
-            "quarter" => 7_948_800,
-            "year" => 31_622_400,
-            _ => 3_600,
-        };
+        let seconds_per_interval = get_seconds_per_interval(interval.as_ref().unwrap().as_str());
 
         let page = page.unwrap_or(1);
 
@@ -235,14 +239,8 @@ impl DataBase {
             limit,
         } = params;
 
-        let seconds_per_interval = match interval.as_ref().unwrap().as_str() {
-            "hour" => 3600,
-            "day" => 86_400,
-            "week" => 604_800,
-            "month" => 2_678_400,
-            "year" => 31_622_400,
-            _ => 3_600,
-        };
+        let seconds_per_interval = get_seconds_per_interval(interval.as_ref().unwrap().as_str());
+
 
         let page = page.unwrap_or(1);
 
