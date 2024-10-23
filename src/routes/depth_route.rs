@@ -5,6 +5,7 @@ use crate::{models::depth_history_model::PoolDepthPriceHistory, services::db::Da
 
 #[derive(Debug,Serialize,Deserialize)]
 pub struct QueryParams{
+    pub pool : Option<String>,
     pub interval : Option<String>,
     pub count : Option<u16>,
     pub to : Option<u64>,
