@@ -47,7 +47,10 @@ impl RunePool{
                 start_time : interval.startTime.parse::<i64>().expect(&generate_error_text("startTime")),
                 units : interval.units.parse::<f64>().expect(&generate_error_text("untis"))
             };
-            
+            match db.rune_pool_history.insert_one(rune_pool_obj).await {
+                Ok(_record) => print!("Rune pool record writted to db!"),
+                Err(e) => eprint!("Err adding rune pool to db {}",e)
+            }
         }
     }
     pub async fn fetch_rune_pool(db:&DataBase,interval:&str,count:&str,from:&str) -> Result<i64, reqwestError>{
