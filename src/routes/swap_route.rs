@@ -1,4 +1,4 @@
-use actix_web::{web, HttpResponse, Responder};
+use actix_web::{web::{self, ServiceConfig}, HttpResponse, Responder};
 use chrono::Utc;
 
 use crate::{models::{depth_history_model::PoolDepthPriceHistory, swap_history_model::SwapHistory}, services::db::DataBase};
@@ -24,4 +24,9 @@ pub async fn fetch_all_swaps_to_db(db:web::Data<DataBase>) -> impl Responder{
         start = end_time;
     }
     HttpResponse::Ok().body(format!("Fetched and added swap records to database"))
+}
+
+pub fn init(config:&mut ServiceConfig){
+    config.service(fetch_all_swaps_to_db);
+    ()
 }
