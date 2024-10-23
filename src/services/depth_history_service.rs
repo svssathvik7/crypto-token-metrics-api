@@ -6,7 +6,7 @@ use reqwest::Error as reqwestError;
 use super::db::DataBase;
 
 // due to volume issues we are sticking to BTC BTC pool type
-fn generate_api_url(pool:String,interval:String,from:String,count:String) -> String{
+fn generate_api_url(pool:&str,interval:&str,from:&str,count:&str) -> String{
     format!("https://midgard.ninerealms.com/v2/history/depths/{}?interval={}&from={}&count={}",pool,interval,from,count)
 }
 
@@ -72,8 +72,8 @@ impl PoolDepthPriceHistory{
         }
         Ok(())
     }
-    pub async fn fetch_price_history(db:&DataBase,pool:String,interval:String,count:String,from:String) -> Result<i64,reqwestError>{
-        let url = generate_api_url(pool,interval,from,count);
+    pub async fn fetch_price_history(db:&DataBase,pool:&str,interval:&str,count:&str,from:&str) -> Result<i64,reqwestError>{
+        let url = generate_api_url(&pool,&interval,&from,&count);
         println!("{}",url);
         let response = reqwest::get(&url).await?.json::<ApiResponse>().await?;
         // println!("{:?}",response);
