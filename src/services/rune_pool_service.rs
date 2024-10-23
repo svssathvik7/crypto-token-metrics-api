@@ -59,6 +59,7 @@ impl RunePool{
         let response = reqwest::get(&url).await?.json::<ApiResponse>().await?;
         let end_time = response.meta.endTime.clone();
         let end_time = end_time.parse::<i64>().unwrap();
+        self::RunePool::store_rune_pool(db, response).await;
         Ok(end_time)
     }
 }
