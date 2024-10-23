@@ -148,7 +148,10 @@ impl SwapHistory{
                 total_volume: interval.totalVolume.parse::<f64>().expect(&generate_error_text("totalVolume")),
                 total_volume_usd: interval.totalVolumeUSD.parse::<f64>().expect(&generate_error_text("totalVolumeUSD"))
             };
-            
+            match db.swap_history.insert_one(pool_swap_history).await {
+                Ok(_record) => println!("Inserted pool swap doc {}",pool),
+                Err(e) => eprint!("Error inserting swap doc to db {:?}",e)
+            }
         }
     }
     pub async fn fetch_swap_history(db:&DataBase,pool:String,interval:String,count:String,from:String) -> Result<i64,reqwestError>{
