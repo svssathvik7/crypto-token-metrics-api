@@ -1,9 +1,10 @@
 use actix_web::{web, HttpResponse, Responder};
 use chrono::Utc;
-
 use crate::{models::earning_history_model::PoolEarningHistory, services::db::DataBase};
+
+
 #[actix_web::get("/fetch-earnings-all")]
-pub async fn fetch_all_earnings_to_db(db:web::Data<DataBase>) -> impl Responder{
+pub async fn fetch_all_earnings_to_db(db:web::Data<DataBase>) -> HttpResponse{
 
     let current_time_stamp = Utc::now().timestamp();
     let mut start = 1647913096;
@@ -21,4 +22,9 @@ pub async fn fetch_all_earnings_to_db(db:web::Data<DataBase>) -> impl Responder{
         start = end_time;
     }
     HttpResponse::Ok().body(format!("Fetched and added earnings to database"))
+}
+
+pub fn init(config:&mut web::ServiceConfig){
+    config.service(fetch_all_earnings_to_db);
+    ()
 }
