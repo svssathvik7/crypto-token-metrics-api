@@ -1,7 +1,20 @@
 use actix_web::{web, HttpResponse, Responder};
 use chrono::Utc;
-use crate::{models::earning_history_model::PoolEarningHistory, services::db::DataBase};
+use crate::{models::{api_request_param_model::{validate_query, QueryParams}, earning_history_model::PoolEarningHistory}, services::db::DataBase};
 
+#[actix_web::get("")]
+pub async fn get_earnings_history(db:web::Data<DataBase>,params:web::Query<QueryParams>) -> HttpResponse{
+    if let Err(validation_err) = validate_query(&params) {
+        return validation_err;
+    }
+    match db.get_pool_earnings_history_api(params.into_inner()).await {
+        Ok(result) => HttpResponse::Ok().json(result),
+        Err(e) => {
+            eprint!("Error at /earnings {:?}",e);
+            HttpResponse::InternalServerError().json(e)
+        }
+    }
+}
 
 #[actix_web::get("/fetch-earnings-all")]
 pub async fn fetch_all_earnings_to_db(db:web::Data<DataBase>) -> HttpResponse{
