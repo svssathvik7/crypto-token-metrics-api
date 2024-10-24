@@ -131,7 +131,7 @@ impl SwapHistory{
         let url = generate_api_url(&pool,&interval, &from, &count);
         let most_updated_start_in_db = get_max_start_time_of_collection(&db.depth_history).await.unwrap_or(0);
         if most_updated_start_in_db <= from.parse::<i64>().unwrap_or(0) as i64{
-            print!("Request time is ahead of the db's latest record!");
+            print!("Can''t access future time stamps");
             Ok(Utc::now().timestamp())
         }
         else{
