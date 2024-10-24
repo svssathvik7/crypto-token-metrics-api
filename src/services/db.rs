@@ -94,6 +94,21 @@ impl DataBase {
                 doc! {"$gte": calc_start-(count*queried_interval_duration) as i64},
             );
         }
+        if let Some(from) = from {
+            query.insert("start_time", doc! { "$gte": from as i64 });
+        } else {
+            let calc_start = if let Some(to) = to {
+                to as i64
+            } else {
+                get_max_start_time_of_collection(&self.depth_history).await.unwrap_or(Utc::now().timestamp())
+            };
+            let count = count.unwrap_or(400) as i64;
+            let queried_interval_duration = seconds_per_interval as i64;
+            query.insert(
+                "start_time",
+                doc! {"$gte": calc_start-(count*queried_interval_duration) as i64},
+            );
+        }
 
         let (query, sort_filter, skip_size, limit) = build_query_sort_skip(to, sort_by, sort_order, page, limit, count).await;
         println!("{}", query);
