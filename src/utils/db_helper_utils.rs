@@ -37,7 +37,7 @@ pub async fn build_query_sort_skip(
     // Constructing the sort filter
     let sort_filter = if let Some(sort_by) = sort_by {
         let sort_order = sort_order.unwrap_or(1);
-        doc! { sort_by: if sort_order == 1 { 1 } else { -1 } }
+        doc! { sort_by: if sort_order >= 1 { 1 } else { -1 } }
     } else {
         doc! { "end_time": -1 }
     };
