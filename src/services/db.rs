@@ -265,7 +265,7 @@ impl DataBase {
             query.insert("pool", pool);
         }
 
-        let limit: i16 = if let Some(limit) = limit { limit } else { 400 };
+        let limit: i16 = if let Some(limit) = limit { limit } else { if let Some(count) = count {count as i16} else {400} };
 
         if let Some(from) = from {
             query.insert("start_time", doc! { "$gte": from as i64 });
@@ -487,7 +487,7 @@ impl DataBase {
             ));
         }
 
-        let limit: i16 = if let Some(limit) = limit { limit } else { 400 };
+        let limit: i16 = if let Some(limit) = limit { limit } else { if let Some(count) = count {count as i16} else {400} };
 
         if let Some(from) = from {
             query.insert("start_time", doc! { "$gte": from as i64 });
@@ -636,7 +636,7 @@ impl DataBase {
             query.insert("pool", pool);
         }
 
-        let limit: i16 = if let Some(limit) = limit { limit } else { 400 };
+        let limit: i16 = if let Some(limit) = limit { limit } else { if let Some(count) = count {count as i16} else {400} };
 
         if let Some(from) = from {
             query.insert("start_time", doc! { "$gte": from as i64 });
