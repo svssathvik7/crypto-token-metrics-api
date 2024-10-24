@@ -1,4 +1,3 @@
-use actix_web::web::Data;
 use chrono::Utc;
 use tokio::time::{interval, Duration};
 use dotenv::dotenv;
