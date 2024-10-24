@@ -226,7 +226,6 @@ impl DataBase {
 
         let seconds_per_interval = get_seconds_per_interval(interval.as_ref().unwrap().as_str());
 
-        let page = page.unwrap_or(1);
 
         if let Some(pool) = pool {
             // for now due to volume and computation constraints our swap history is confined to only BTC.BTC pool
@@ -238,7 +237,6 @@ impl DataBase {
             query.insert("pool", pool);
         }
 
-        let limit: i16 = if let Some(limit) = limit { limit } else { if let Some(count) = count {count as i16} else {400} };
 
         if let Some(from) = from {
             query.insert("start_time", doc! { "$gte": from as i64 });
@@ -256,51 +254,8 @@ impl DataBase {
             );
         }
 
-        if let Some(to) = to {
-            query.insert("end_time", doc! { "$lte": to as i64 });
-        }
+        let (query, sort_filter, skip_size, limit) = build_query_sort_skip(to, sort_by, sort_order, page, limit, count).await;
 
-        let sort_filter = if let Some(sort_by) = sort_by {
-            if let Some(sort_order) = sort_order {
-                let sort_order = if sort_order == 1 { 1 } else { -1 };
-                doc! { sort_by: sort_order }
-            } else {
-                doc! { sort_by: 1 }
-            }
-        } else {
-            doc! { "end_time": -1 }
-        };
-        let skip_size = (page - 1) * (limit as u64);
-        let interval = interval.unwrap_or(String::from("hour"));
-        println!("{}", query);
-        if interval == "hour" {
-            println!("{}", query);
-            let mut cursor = self
-                .swap_history
-                .find(query)
-                .skip(skip_size as u64)
-                .limit(limit as i64)
-                .sort(sort_filter)
-                .await?;
-
-            let mut query_response = Vec::new();
-
-            while let Some(result) = cursor.next().await {
-                match result {
-                    Ok(record) => {
-                        let mut record = mongodb::bson::to_document(&record)
-                            .expect("Error parsing the document");
-                        record.remove("_id");
-                        query_response.push(record);
-                    }
-                    Err(e) => {
-                        eprintln!("Failed fetching data! {}", e);
-                    }
-                }
-            }
-            // println!("{:?}",query_response);
-            return Ok(query_response);
-        }
         let pipeline = vec![
             doc! { "$match": query }, // Match stage
             doc! {
@@ -442,25 +397,13 @@ impl DataBase {
             limit,
         } = params;
 
-        let seconds_per_interval = match interval.as_ref().unwrap().as_str() {
-            "hour" => 3600,
-            "day" => 86_400,
-            "week" => 604_800,
-            "month" => 2_678_400,
-            "quarter" => 7_948_800,
-            "year" => 31_622_400,
-            _ => 3_600,
-        };
-
-        let page = page.unwrap_or(1);
+        let seconds_per_interval = get_seconds_per_interval(interval.as_ref().unwrap().as_str());
 
         if let Some(_pool) = pool {
             return Err(CustomError::InvalidInput(
                 "Invalid parameter pool!".to_string(),
             ));
         }
-
-        let limit: i16 = if let Some(limit) = limit { limit } else { if let Some(count) = count {count as i16} else {400} };
 
         if let Some(from) = from {
             query.insert("start_time", doc! { "$gte": from as i64 });
@@ -478,51 +421,8 @@ impl DataBase {
             );
         }
 
-        if let Some(to) = to {
-            query.insert("end_time", doc! { "$lte": to as i64 });
-        }
+        let (query, sort_filter, skip_size, limit) = build_query_sort_skip(to, sort_by, sort_order, page, limit, count).await;
 
-        let sort_filter = if let Some(sort_by) = sort_by {
-            if let Some(sort_order) = sort_order {
-                let sort_order = if sort_order == 1 { 1 } else { -1 };
-                doc! { sort_by: sort_order }
-            } else {
-                doc! { sort_by: 1 }
-            }
-        } else {
-            doc! { "end_time": -1 }
-        };
-        let skip_size = (page - 1) * (limit as u64);
-        let interval = interval.unwrap_or(String::from("hour"));
-        println!("{}", query);
-        if interval == "hour" {
-            println!("{}", query);
-            let mut cursor = self
-                .rune_pool_history
-                .find(query)
-                .skip(skip_size as u64)
-                .limit(limit as i64)
-                .sort(sort_filter)
-                .await?;
-
-            let mut query_response = Vec::new();
-
-            while let Some(result) = cursor.next().await {
-                match result {
-                    Ok(record) => {
-                        let mut record = mongodb::bson::to_document(&record)
-                            .expect("Error parsing the document");
-                        record.remove("_id");
-                        query_response.push(record);
-                    }
-                    Err(e) => {
-                        eprintln!("Failed fetching data! {}", e);
-                    }
-                }
-            }
-            // println!("{:?}",query_response);
-            return Ok(query_response);
-        }
         let pipeline = vec![
             doc! { "$match": query }, // Match stage
             doc! {
@@ -595,13 +495,9 @@ impl DataBase {
 
         let seconds_per_interval = get_seconds_per_interval(interval.as_ref().unwrap_or(&"hour".to_string()).as_str());
 
-        let page = page.unwrap_or(1);
-
         if let Some(pool) = pool {
             query.insert("pool", pool);
         }
-
-        let limit: i16 = if let Some(limit) = limit { limit } else { if let Some(count) = count {count as i16} else {400} };
 
         if let Some(from) = from {
             query.insert("start_time", doc! { "$gte": from as i64 });
@@ -619,21 +515,8 @@ impl DataBase {
             );
         }
 
-        if let Some(to) = to {
-            query.insert("end_time", doc! { "$lte": to as i64 });
-        }
+        let (query, sort_filter, skip_size, limit) = build_query_sort_skip(to, sort_by, sort_order, page, limit, count).await;
 
-        let sort_filter = if let Some(sort_by) = sort_by {
-            if let Some(sort_order) = sort_order {
-                let sort_order = if sort_order == 1 { 1 } else { -1 };
-                doc! { sort_by: sort_order }
-            } else {
-                doc! { sort_by: 1 }
-            }
-        } else {
-            doc! { "end_time": -1 }
-        };
-        let skip_size = (page - 1) * (limit as u64);
         println!("{}", query);
         
         let pipeline = vec![
