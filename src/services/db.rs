@@ -15,20 +15,10 @@ use crate::models::{
     rune_pool_model::RunePool,
     swap_history_model::SwapHistory,
 };
+use crate::utils::db_helper_utils::get_seconds_per_interval;
 
 
 const api_start_time:i64 = 1_647_913_096;
-pub fn get_seconds_per_interval(interval: &str) -> i32 {
-    match interval {
-        "hour" => 3600,
-        "day" => 86_400,
-        "week" => 604_800,
-        "month" => 2_678_400,
-        "quarter" => 7_948_800,
-        "year" => 31_622_400,
-        _ => 3_600,
-    }
-}
 
 pub struct DataBase {
     pub depth_history: Collection<PoolDepthPriceHistory>,
@@ -620,15 +610,7 @@ impl DataBase {
             limit,
         } = params;
 
-        let seconds_per_interval = match interval.as_ref().unwrap_or(&"hour".to_string()).as_str() {
-            "hour" => 3600,
-            "day" => 86_400,
-            "week" => 604_800,
-            "month" => 2_678_400,
-            "quarter" => 7_948_800,
-            "year" => 31_622_400,
-            _ => 3_600,
-        };
+        let seconds_per_interval = get_seconds_per_interval(interval.as_ref().unwrap_or(&"hour".to_string()).as_str());
 
         let page = page.unwrap_or(1);
 
