@@ -1,4 +1,3 @@
-use mongodb::bson::oid::ObjectId;
 use serde::{Deserialize, Serialize};
 
 use crate::models::swap_history_model::SwapHistory;
@@ -56,6 +55,7 @@ pub struct Meta {
     pub synth_mint_average_slip: String,
     pub synth_redeem_average_slip: String,
     pub average_slip: String,
+    #[serde(rename="runePriceUSD")]
     pub rune_price_usd: String,
 }
 
