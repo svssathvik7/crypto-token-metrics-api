@@ -12,38 +12,41 @@ fn generate_api_url(pool:&str,interval:&str,from:&str,count:&str) -> String{
 
 
 #[derive(Debug,Deserialize,Serialize)]
+#[serde(rename_all="camelCase")]
 pub struct Meta {
-    // couldnt follow snake case since that how its in api response of midgard
-    pub endAssetDepth: String,
-    pub endLPUnits: String,
-    pub endMemberCount: String,
-    pub endRuneDepth: String,
-    pub endSynthUnits: String,
-    pub endTime: String,
-    pub luviIncrease: String,
-    pub priceShiftLoss: String,
-    pub startAssetDepth: String,
-    pub startLPUnits: String,
-    pub startMemberCount: String,
-    pub startRuneDepth: String,
-    pub startSynthUnits: String,
-    pub startTime: String,
+    pub end_asset_depth: String,
+    #[serde(rename="endLPUnits")]
+    pub end_lp_units: String,
+    pub end_member_count: String,
+    pub end_rune_depth: String,
+    pub end_synth_units: String,
+    pub end_time: String,
+    pub luvi_increase: String,
+    pub price_shift_loss: String,
+    pub start_asset_depth: String,
+    #[serde(rename="startLPUnits")]
+    pub start_lp_units: String,
+    pub start_member_count: String,
+    pub start_rune_depth: String,
+    pub start_synth_units: String,
+    pub start_time: String,
 }
 
 #[derive(Debug,Serialize,Deserialize)]
+#[serde(rename_all="camelCase")]
 pub struct Interval {
-    // couldnt follow snake case since that how its in api response of midgard
-    pub assetDepth: String,
-    pub assetPrice: String,
-    pub assetPriceUSD: String,
-    pub endTime: String,
-    pub liquidityUnits: String,
+    pub asset_depth: String,
+    pub asset_price: String,
+    #[serde(rename="assetPriceUSD")]
+    pub asset_price_usd: String,
+    pub end_time: String,
+    pub liquidity_units: String,
     pub luvi: String,
-    pub membersCount: String,
-    pub runeDepth: String,
-    pub startTime: String,
-    pub synthSupply: String,
-    pub synthUnits: String,
+    pub members_count: String,
+    pub rune_depth: String,
+    pub start_time: String,
+    pub synth_supply: String,
+    pub synth_units: String,
     pub units: String,
 }
 
@@ -77,7 +80,7 @@ impl PoolDepthPriceHistory{
         println!("{}",url);
         let response = reqwest::get(&url).await?.json::<ApiResponse>().await?;
         // println!("{:?}",response);
-        let end_time = response.meta.endTime.clone();
+        let end_time = response.meta.end_time.clone();
         let end_time = end_time.parse::<i64>().unwrap();
         self::PoolDepthPriceHistory::store_price_history(db,response).await;
         Ok(end_time)
