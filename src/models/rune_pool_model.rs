@@ -1,5 +1,6 @@
 use mongodb::bson::oid::ObjectId;
 use serde::{Deserialize, Serialize};
+use utoipa::ToSchema;
 
 use crate::services::rune_pool_service::Interval;
 use std::error::Error as stdError;
@@ -8,8 +9,9 @@ fn generate_error_text(field_name:&str) -> String{
     format!("Incorrect {} format",field_name)
 }
 
-#[derive(Debug,Serialize,Deserialize)]
+#[derive(Debug,Serialize,Deserialize, ToSchema)]
 pub struct RunePool{
+    #[schema(value_type = String, example = "60d5ec49a1c4b5048c0e5c70")]
     pub _id : ObjectId,
     pub count : f64,
     pub end_time : i64,

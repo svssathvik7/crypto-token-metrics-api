@@ -1,9 +1,11 @@
 use mongodb::bson::oid::ObjectId;
 use serde::{Deserialize, Serialize};
+use utoipa::ToSchema;
 
 
-#[derive(Debug,Serialize,Deserialize)]
+#[derive(Debug,Serialize,Deserialize,ToSchema)]
 pub struct PoolEarningSummary{
+    #[schema(value_type = String, example = "60d5ec49a1c4b5048c0e5c70")]
     pub _id : ObjectId,
     pub avg_node_count : f64,
     pub block_rewards : f64,

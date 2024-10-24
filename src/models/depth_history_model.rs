@@ -2,14 +2,16 @@ use std::error::Error as stdError;
 use mongodb::bson::oid::ObjectId;
 
 use serde::{Deserialize, Serialize};
+use utoipa::{openapi::schema, ToSchema};
 use crate::services::depth_history_service::Interval;
 
 fn generate_error_text(field_name:&str) -> String{
     format!("Incorrect {} format",field_name)
 }
 
-#[derive(Deserialize,Serialize,Debug)]
+#[derive(Deserialize,Serialize,Debug,ToSchema)]
 pub struct PoolDepthPriceHistory{
+    #[schema(value_type = String, example = "60d5ec49a1c4b5048c0e5c70")]
     pub _id : ObjectId,
     pub pool : String,
     pub asset_depth : f64,

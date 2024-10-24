@@ -1,7 +1,8 @@
 use actix_web::HttpResponse;
 use serde::{Deserialize, Serialize};
+use utoipa::ToSchema;
 
-#[derive(Debug,Serialize,Deserialize)]
+#[derive(Debug,Serialize,Deserialize,ToSchema)]
 pub struct QueryParams{
     pub pool : Option<String>,
     pub interval : Option<String>,

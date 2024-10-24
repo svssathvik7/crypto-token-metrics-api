@@ -1,5 +1,6 @@
 use mongodb::bson::oid::ObjectId;
 use serde::{Deserialize, Serialize};
+use utoipa::ToSchema;
 use std::error::Error as stdError;
 use crate::services::swap_history_service::Interval;
 
@@ -7,8 +8,9 @@ fn generate_error_text(field_name:&str) -> String{
     format!("Incorrect {} format",field_name)
 }
 
-#[derive(Debug,Serialize,Deserialize)]
+#[derive(Debug,Serialize,Deserialize,ToSchema)]
 pub struct SwapHistory {
+    #[schema(value_type = String, example = "60d5ec49a1c4b5048c0e5c70")]
     pub _id: ObjectId,
     pub pool: String,
     pub average_slip: f64,
