@@ -16,10 +16,7 @@ use crate::models::{
     rune_pool_model::RunePool,
     swap_history_model::SwapHistory,
 };
-use crate::utils::db_helper_utils::{build_query_sort_skip, get_seconds_per_interval};
-
-
-const API_START_TIME:i64 = 1_647_913_096;
+use crate::utils::db_helper_utils::{build_query_sort_skip, get_max_start_time_of_collection, get_seconds_per_interval};
 
 pub struct DataBase {
     pub depth_history: Collection<PoolDepthPriceHistory>,
@@ -48,42 +45,6 @@ impl DataBase {
             earnings_summary: earning_summary_collection,
             swap_history: swap_history_collection,
             rune_pool_history: rune_pool_collection,
-        }
-    }
-
-    // helper function
-    pub async fn get_max_start_time_of_collection<T>(
-        &self,
-        collection: &Collection<T>,
-    ) -> Result<i64, CustomError>
-    where
-        T: DeserializeOwned + Unpin + Send + Sync,
-    {
-        let pipeline = vec![
-            doc! {
-                "$group": {
-                    "_id": null,
-                    "max_start_time": { "$max": "$start_time" }
-                }
-            },
-            doc! { "$limit": 1 },
-        ];
-    
-        let mut cursor = collection.aggregate(pipeline).await?;
-    
-        if let Some(result) = cursor.next().await {
-            match result {
-                Ok(doc) => {
-                    let max_start_time = doc.get_i64("max_start_time").unwrap_or(0);
-                    Ok(max_start_time)
-                }
-                Err(e) => {
-                    eprintln!("Failed to fetch max start_time: {}", e);
-                    Err(CustomError::DatabaseError(e.to_string()))
-                }
-            }
-        } else {
-            Ok(API_START_TIME)
         }
     }    
 
@@ -124,7 +85,7 @@ impl DataBase {
             let calc_start = if let Some(to) = to {
                 to as i64
             } else {
-                self.get_max_start_time_of_collection(&self.depth_history).await.unwrap_or(Utc::now().timestamp())
+                get_max_start_time_of_collection(&self.depth_history).await.unwrap_or(Utc::now().timestamp())
             };
             let count = count.unwrap_or(400) as i64;
             let queried_interval_duration = seconds_per_interval as i64;

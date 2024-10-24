@@ -1,5 +1,12 @@
+use futures_util::StreamExt;
 use mongodb::bson::doc;
 use mongodb::bson::Document;
+use mongodb::Collection;
+use serde::de::DeserializeOwned;
+
+use crate::models::custom_error_model::CustomError;
+
+use super::constants::API_START_TIME;
 pub fn get_seconds_per_interval(interval: &str) -> i32 {
     match interval {
         "hour" => 3600,
@@ -12,6 +19,40 @@ pub fn get_seconds_per_interval(interval: &str) -> i32 {
     }
 }
 
+// helper function
+pub async fn get_max_start_time_of_collection<T>(
+    collection: &Collection<T>,
+) -> Result<i64, CustomError>
+where
+    T: DeserializeOwned + Unpin + Send + Sync,
+{
+    let pipeline = vec![
+        doc! {
+            "$group": {
+                "_id": null,
+                "max_start_time": { "$max": "$start_time" }
+            }
+        },
+        doc! { "$limit": 1 },
+    ];
+
+    let mut cursor = collection.aggregate(pipeline).await?;
+
+    if let Some(result) = cursor.next().await {
+        match result {
+            Ok(doc) => {
+                let max_start_time = doc.get_i64("max_start_time").unwrap_or(0);
+                Ok(max_start_time)
+            }
+            Err(e) => {
+                eprintln!("Failed to fetch max start_time: {}", e);
+                Err(CustomError::DatabaseError(e.to_string()))
+            }
+        }
+    } else {
+        Ok(API_START_TIME)
+    }
+}
 
 pub async fn build_query_sort_skip(
     to: Option<u64>,
