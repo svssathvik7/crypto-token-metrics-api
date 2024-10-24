@@ -66,7 +66,7 @@ impl DataBase {
             limit,
         } = params;
 
-        let seconds_per_interval = get_seconds_per_interval(interval.as_ref().unwrap().as_str());
+        let seconds_per_interval = get_seconds_per_interval(interval.as_ref().unwrap_or(&"hour".to_string()).as_str());
 
         
         if let Some(pool) = pool {
@@ -188,7 +188,7 @@ impl DataBase {
             limit,
         } = params;
 
-        let seconds_per_interval = get_seconds_per_interval(interval.as_ref().unwrap().as_str());
+        let seconds_per_interval = get_seconds_per_interval(interval.as_ref().unwrap_or(&"hour".to_string()).as_str());
 
 
         if let Some(pool) = pool {
@@ -360,7 +360,7 @@ impl DataBase {
             limit,
         } = params;
 
-        let seconds_per_interval = get_seconds_per_interval(interval.as_ref().unwrap().as_str());
+        let seconds_per_interval = get_seconds_per_interval(interval.as_ref().unwrap_or(&"hour".to_string()).as_str());
 
         if let Some(_pool) = pool {
             return Err(CustomError::InvalidInput(

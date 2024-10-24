@@ -129,19 +129,12 @@ impl SwapHistory{
     }
     pub async fn fetch_swap_history(db:&DataBase,pool:&str,interval:&str,count:&str,from:&str) -> Result<i64,reqwestError>{
         let url = generate_api_url(&pool,&interval, &from, &count);
-        let most_updated_start_in_db = get_max_start_time_of_collection(&db.depth_history).await.unwrap_or(0);
-        if most_updated_start_in_db <= from.parse::<i64>().unwrap_or(0) as i64{
-            print!("Can''t access future time stamps");
-            Ok(Utc::now().timestamp())
-        }
-        else{
-            println!("url - {}",url);
-            let response: ApiResponse = reqwest::get(&url).await?.json::<ApiResponse>().await?;
-            
-            let end_time = response.meta.end_time.clone();
-            let end_time = end_time.parse::<i64>().unwrap();
-            self::SwapHistory::store_swap_history(db, pool, response).await;
-            Ok(end_time)
-        }
+        println!("url - {}",url);
+        let response: ApiResponse = reqwest::get(&url).await?.json::<ApiResponse>().await?;
+        
+        let end_time = response.meta.end_time.clone();
+        let end_time = end_time.parse::<i64>().unwrap();
+        self::SwapHistory::store_swap_history(db, pool, response).await;
+        Ok(end_time)
     }
 }
