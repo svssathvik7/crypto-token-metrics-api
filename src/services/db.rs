@@ -501,8 +501,8 @@ impl DataBase {
                     "assetLiquidityFees": { "$last": "$asset_liquidity_fees" },
                     "runeLiquidityFees": { "$last": "$rune_liquidity_fees" },
                     "totalLiquidityFeesRune": { "$last": "$total_liquidity_fees_rune" },
-                    "saverEarnings" : {"$last" : "$saver_earnings"},
-                    "earnings" : {"$last" : "$earnings"},
+                    "saverEarning" : {"$last" : "$saver_earning"},
+                    "earning" : {"$last" : "$earning"},
                     "rewards" : {"$last" : "$rewards"},
                     "earnings_summary": { "$last": "$earnings_summary" }
                 }
