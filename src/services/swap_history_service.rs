@@ -10,87 +10,104 @@ fn generate_api_url(pool:&str,interval:&str,from:&str,count:&str) -> String{
 }
 
 #[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all="camelCase")]
 pub struct Meta {
-    pub startTime: String,
-    pub endTime: String,
-    pub toAssetCount: String,
-    pub toRuneCount: String,
-    pub toTradeCount: String,
-    pub fromTradeCount: String,
-    pub synthMintCount: String,
-    pub synthRedeemCount: String,
-    pub totalCount: String,
-    pub toAssetVolume: String,
-    pub toRuneVolume: String,
-    pub toTradeVolume: String,
-    pub fromTradeVolume: String,
-    pub synthMintVolume: String,
-    pub synthRedeemVolume: String,
-    pub totalVolume: String,
-    pub toAssetVolumeUSD: String,
-    pub toRuneVolumeUSD: String,
-    pub toTradeVolumeUSD: String,
-    pub fromTradeVolumeUSD: String,
-    pub synthMintVolumeUSD: String,
-    pub synthRedeemVolumeUSD: String,
-    pub totalVolumeUSD: String,
-    pub toAssetFees: String,
-    pub toRuneFees: String,
-    pub toTradeFees: String,
-    pub fromTradeFees: String,
-    pub synthMintFees: String,
-    pub synthRedeemFees: String,
-    pub totalFees: String,
-    pub toAssetAverageSlip: String,
-    pub toRuneAverageSlip: String,
-    pub toTradeAverageSlip: String,
-    pub fromTradeAverageSlip: String,
-    pub synthMintAverageSlip: String,
-    pub synthRedeemAverageSlip: String,
-    pub averageSlip: String,
-    pub runePriceUSD: String,
+    pub start_time: String,
+    pub end_time: String,
+    pub to_asset_count: String,
+    pub to_rune_count: String,
+    pub to_trade_count: String,
+    pub from_trade_count: String,
+    pub synth_mint_count: String,
+    pub synth_redeem_count: String,
+    pub total_count: String,
+    pub to_asset_volume: String,
+    pub to_rune_volume: String,
+    pub to_trade_volume: String,
+    pub from_trade_volume: String,
+    pub synth_mint_volume: String,
+    pub synth_redeem_volume: String,
+    pub total_volume: String,
+    #[serde(rename="toAssetVolumeUSD")]
+    pub to_asset_volume_usd: String,
+    #[serde(rename="toRuneVolumeUSD")]
+    pub to_rune_volume_usd: String,
+    #[serde(rename="toTradeVolumeUSD")]
+    pub to_trade_volume_usd: String,
+    #[serde(rename="fromTradeVolumeUSD")]
+    pub from_trade_volume_usd: String,
+    #[serde(rename="synthMintVolumeUSD")]
+    pub synth_mint_volume_usd: String,
+    #[serde(rename="synthRedeemVolumeUSD")]
+    pub synth_redeem_volume_usd: String,
+    #[serde(rename="totalVolumeUSD")]
+    pub total_volume_usd: String,
+    pub to_asset_fees: String,
+    pub to_rune_fees: String,
+    pub to_trade_fees: String,
+    pub from_trade_fees: String,
+    pub synth_mint_fees: String,
+    pub synth_redeem_fees: String,
+    pub total_fees: String,
+    pub to_asset_average_slip: String,
+    pub to_rune_average_slip: String,
+    pub to_trade_average_slip: String,
+    pub from_trade_average_slip: String,
+    pub synth_mint_average_slip: String,
+    pub synth_redeem_average_slip: String,
+    pub average_slip: String,
+    pub rune_price_usd: String,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all="camelCase")]
 pub struct Interval {
-    pub startTime: String,
-    pub endTime: String,
-    pub toAssetCount: String,
-    pub toRuneCount: String,
-    pub toTradeCount: String,
-    pub fromTradeCount: String,
-    pub synthMintCount: String,
-    pub synthRedeemCount: String,
-    pub totalCount: String,
-    pub toAssetVolume: String,
-    pub toRuneVolume: String,
-    pub toTradeVolume: String,
-    pub fromTradeVolume: String,
-    pub synthMintVolume: String,
-    pub synthRedeemVolume: String,
-    pub totalVolume: String,
-    pub toAssetVolumeUSD: String,
-    pub toRuneVolumeUSD: String,
-    pub toTradeVolumeUSD: String,
-    pub fromTradeVolumeUSD: String,
-    pub synthMintVolumeUSD: String,
-    pub synthRedeemVolumeUSD: String,
-    pub totalVolumeUSD: String,
-    pub toAssetFees: String,
-    pub toRuneFees: String,
-    pub toTradeFees: String,
-    pub fromTradeFees: String,
-    pub synthMintFees: String,
-    pub synthRedeemFees: String,
-    pub totalFees: String,
-    pub toAssetAverageSlip: String,
-    pub toRuneAverageSlip: String,
-    pub toTradeAverageSlip: String,
-    pub fromTradeAverageSlip: String,
-    pub synthMintAverageSlip: String,
-    pub synthRedeemAverageSlip: String,
-    pub averageSlip: String,
-    pub runePriceUSD: String,
+    pub start_time: String,
+    pub end_time: String,
+    pub to_asset_count: String,
+    pub to_rune_count: String,
+    pub to_trade_count: String,
+    pub from_trade_count: String,
+    pub synth_mint_count: String,
+    pub synth_redeem_count: String,
+    pub total_count: String,
+    pub to_asset_volume: String,
+    pub to_rune_volume: String,
+    pub to_trade_volume: String,
+    pub from_trade_volume: String,
+    pub synth_mint_volume: String,
+    pub synth_redeem_volume: String,
+    pub total_volume: String,
+    #[serde(rename = "toAssetVolumeUSD")]
+    pub to_asset_volume_usd: String,
+    #[serde(rename = "toRuneVolumeUSD")]
+    pub to_rune_volume_usd: String,
+    #[serde(rename = "toTradeVolumeUSD")]
+    pub to_trade_volume_usd: String,
+    #[serde(rename = "fromTradeVolumeUSD")]
+    pub from_trade_volume_usd: String,
+    #[serde(rename = "synthMintVolumeUSD")]
+    pub synth_mint_volume_usd: String,
+    #[serde(rename = "synthRedeemVolumeUSD")]
+    pub synth_redeem_volume_usd: String,
+    #[serde(rename = "totalVolumeUSD")]
+    pub total_volume_usd: String,
+    pub to_asset_fees: String,
+    pub to_rune_fees: String,
+    pub to_trade_fees: String,
+    pub from_trade_fees: String,
+    pub synth_mint_fees: String,
+    pub synth_redeem_fees: String,
+    pub total_fees: String,
+    pub to_asset_average_slip: String,
+    pub to_rune_average_slip: String,
+    pub to_trade_average_slip: String,
+    pub from_trade_average_slip: String,
+    pub synth_mint_average_slip: String,
+    pub synth_redeem_average_slip: String,
+    pub average_slip: String,
+    #[serde(rename = "runePriceUSD")]
+    pub rune_price_usd: String,
 }
 
 #[derive(Debug,Serialize,Deserialize)]
@@ -114,7 +131,7 @@ impl SwapHistory{
         println!("url - {}",url);
         let response: ApiResponse = reqwest::get(&url).await?.json::<ApiResponse>().await?;
         
-        let end_time = response.meta.endTime.clone();
+        let end_time = response.meta.end_time.clone();
         let end_time = end_time.parse::<i64>().unwrap();
         self::SwapHistory::store_swap_history(db, pool, response).await;
         Ok(end_time)

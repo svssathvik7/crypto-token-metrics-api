@@ -22,8 +22,8 @@ impl TryFrom<Interval> for RunePool{
     fn try_from(interval: Interval) -> Result<Self, Self::Error> {
         let _id = ObjectId::new();
         let count = interval.count.parse::<f64>().expect(&generate_error_text("count"));
-        let end_time = interval.endTime.parse::<i64>().expect(&generate_error_text("endTime"));
-        let start_time = interval.startTime.parse::<i64>().expect(&generate_error_text("startTime"));
+        let end_time = interval.end_time.parse::<i64>().expect(&generate_error_text("endTime"));
+        let start_time = interval.start_time.parse::<i64>().expect(&generate_error_text("startTime"));
         let units = interval.units.parse::<f64>().expect(&generate_error_text("untis"));
         let rune_pool_obj = Self {
             _id,

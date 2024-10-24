@@ -9,20 +9,22 @@ fn generate_api_url(interval:&str,from:&str,count:&str) -> String{
 }
 
 #[derive(Debug,Serialize,Deserialize)]
+#[serde(rename_all="camelCase")]
 pub struct Meta{
-    pub endCount: String,
-    pub endTime: String,
-    pub endUnits: String,
-    pub startCount: String,
-    pub startTime: String,
-    pub startUnits: String
+    pub end_count: String,
+    pub end_time: String,
+    pub end_units: String,
+    pub start_count: String,
+    pub start_time: String,
+    pub start_units: String
 }
 
 #[derive(Debug,Serialize,Deserialize)]
+#[serde(rename_all="camelCase")]
 pub struct Interval{
     pub count: String,
-    pub endTime: String,
-    pub startTime: String,
+    pub end_time: String,
+    pub start_time: String,
     pub units: String
 }
 
@@ -52,7 +54,7 @@ impl RunePool{
         let url = generate_api_url(interval, from, count);
         println!("url - {}",&url);
         let response = reqwest::get(&url).await?.json::<ApiResponse>().await?;
-        let end_time = response.meta.endTime.clone();
+        let end_time = response.meta.end_time.clone();
         let end_time = end_time.parse::<i64>().unwrap();
         self::RunePool::store_rune_pool(db, response).await;
         Ok(end_time)
