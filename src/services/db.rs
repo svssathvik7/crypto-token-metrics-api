@@ -15,7 +15,7 @@ use crate::models::{
     rune_pool_model::RunePool,
     swap_history_model::SwapHistory,
 };
-use crate::utils::db_helper_utils::get_seconds_per_interval;
+use crate::utils::db_helper_utils::{build_query_sort_skip, get_seconds_per_interval};
 
 
 const api_start_time:i64 = 1_647_913_096;
@@ -106,8 +106,7 @@ impl DataBase {
 
         let seconds_per_interval = get_seconds_per_interval(interval.as_ref().unwrap().as_str());
 
-        let page = page.unwrap_or(1);
-
+        
         if let Some(pool) = pool {
             // for now due to volume and computation constraints our depth history is confined to only BTC.BTC pool
             if pool != "BTC.BTC" {
@@ -117,8 +116,6 @@ impl DataBase {
             }
             query.insert("pool", pool);
         }
-
-        let limit: i16 = if let Some(limit) = limit { limit } else { if let Some(count) = count {count as i16} else {400} };
 
         if let Some(from) = from {
             query.insert("start_time", doc! { "$gte": from as i64 });
@@ -136,21 +133,7 @@ impl DataBase {
             );
         }
 
-        if let Some(to) = to {
-            query.insert("end_time", doc! { "$lte": to as i64 });
-        }
-
-        let sort_filter = if let Some(sort_by) = sort_by {
-            if let Some(sort_order) = sort_order {
-                let sort_order = if sort_order == 1 { 1 } else { -1 };
-                doc! { sort_by: sort_order }
-            } else {
-                doc! { sort_by: 1 }
-            }
-        } else {
-            doc! { "end_time": -1 }
-        };
-        let skip_size = (page - 1) * (limit as u64);
+        let (query, sort_filter, skip_size, limit) = build_query_sort_skip(to, sort_by, sort_order, page, limit, count).await;
         println!("{}", query);
         
         let pipeline = vec![
