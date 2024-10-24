@@ -15,5 +15,5 @@ async fn main() -> std::io::Result<()>{
         move || {
             App::new().app_data(db_data.clone()).service(scope("/depths").configure(depth_route::init)).service(scope("/earnings").configure(earning_route::init)).service(scope("/swaps").configure(swap_route::init)).service(scope("/runepool").configure(rune_pool_route::init))
         }
-    ).bind("localhost:8000")?.run().await
+    ).bind("localhost:3000")?.run().await
 }

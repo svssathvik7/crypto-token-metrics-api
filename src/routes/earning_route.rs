@@ -25,7 +25,7 @@ pub async fn fetch_all_earnings_to_db(db:web::Data<DataBase>) -> HttpResponse{
         let end_time = match PoolEarningHistory::fetch_earning_history(db.get_ref(), "hour", "400", &(start).to_string()).await {
             Ok(response) => response,
             Err(e) => {
-                println!("Failed to fetch and update db with fetch price history! {:?}\n",e);
+                println!("Failed to fetch and update db with earnings price history! {:?}\n",e);
                 current_time_stamp+10
             }
         };
@@ -38,6 +38,6 @@ pub async fn fetch_all_earnings_to_db(db:web::Data<DataBase>) -> HttpResponse{
 }
 
 pub fn init(config:&mut web::ServiceConfig){
-    config.service(fetch_all_earnings_to_db);
+    config.service(fetch_all_earnings_to_db).service(get_earnings_history);
     ()
 }

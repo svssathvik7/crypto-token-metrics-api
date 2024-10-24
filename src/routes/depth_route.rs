@@ -1,6 +1,5 @@
 use actix_web::{web::{self, ServiceConfig}, HttpResponse, Responder};
 use chrono::Utc;
-use serde::{Deserialize, Serialize};
 use crate::{models::{api_request_param_model::{validate_query, QueryParams}, depth_history_model::PoolDepthPriceHistory}, services::db::DataBase};
 
 

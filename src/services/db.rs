@@ -15,7 +15,7 @@ use crate::models::{
     swap_history_model::SwapHistory,
 };
 
-pub fn get_seconds_per_interval(interval:&str) -> i32{
+pub fn get_seconds_per_interval(interval: &str) -> i32 {
     match interval {
         "hour" => 3600,
         "day" => 86_400,
@@ -222,7 +222,6 @@ impl DataBase {
         Ok(query_response)
     }
 
-
     // /swaps
     pub async fn get_swaps_history_api(
         &self,
@@ -242,7 +241,6 @@ impl DataBase {
         } = params;
 
         let seconds_per_interval = get_seconds_per_interval(interval.as_ref().unwrap().as_str());
-
 
         let page = page.unwrap_or(1);
 
@@ -597,7 +595,7 @@ impl DataBase {
     pub async fn get_pool_earnings_history_api(
         &self,
         params: QueryParams,
-    ) -> Result<Vec<Document>, CustomError> {
+    ) -> Result<Document, CustomError> {
         let mut query = doc! {};
         let QueryParams {
             pool,
@@ -611,7 +609,7 @@ impl DataBase {
             limit,
         } = params;
 
-        let seconds_per_interval = match interval.as_ref().unwrap().as_str() {
+        let seconds_per_interval = match interval.as_ref().unwrap_or(&"hour".to_string()).as_str() {
             "hour" => 3600,
             "day" => 86_400,
             "week" => 604_800,
@@ -660,38 +658,10 @@ impl DataBase {
             doc! { "end_time": -1 }
         };
         let skip_size = (page - 1) * (limit as u64);
-        let interval = interval.unwrap_or(String::from("hour"));
         println!("{}", query);
-        if interval == "hour" {
-            println!("{}", query);
-            let mut cursor = self
-                .earnings
-                .find(query)
-                .skip(skip_size as u64)
-                .limit(limit as i64)
-                .sort(sort_filter)
-                .await?;
-
-            let mut query_response = Vec::new();
-
-            while let Some(result) = cursor.next().await {
-                match result {
-                    Ok(record) => {
-                        let mut record = mongodb::bson::to_document(&record)
-                            .expect("Error parsing the document");
-                        record.remove("_id");
-                        query_response.push(record);
-                    }
-                    Err(e) => {
-                        eprintln!("Failed fetching data! {}", e);
-                    }
-                }
-            }
-            // println!("{:?}",query_response);
-            return Ok(query_response);
-        }
+        
         let pipeline = vec![
-            doc! { "$match": query }, // Match stage
+            doc! { "$match": query },
             doc! {
                 "$group": {
                     "_id": {
@@ -711,9 +681,17 @@ impl DataBase {
                     "total_liquidity_fees_rune": { "$last": "$total_liquidity_fees_rune" },
                     "saver_earnings" : {"$last" : "$saver_earnings"},
                     "earnings" : {"$last" : "$earnings"},
-                    "rewards" : {"$last" : "$rewards"}
+                    "rewards" : {"$last" : "$rewards"},
+                    "earnings_summary": { "$last": "$earnings_summary" }
                 }
             },
+            doc! { "$lookup": {
+                "from": "earnings_summary",
+                "localField": "earnings_summary",
+                "foreignField": "_id",
+                "as": "earnings_summary"
+            }},
+            doc! { "$unwind": {"path" : "$earnings_summary"} },
             doc! { "$project": {
                 "_id": 0,
                 "asset_liquidity_fees" : 1,
@@ -723,6 +701,7 @@ impl DataBase {
                 "rune_liquidity_fees" : 1,
                 "saver_earnings" : 1,
                 "total_liquidity_fees_rune" : 1,
+                "earnings_summary" : 1,
             }},
             doc! { "$sort": sort_filter },
             doc! { "$skip": skip_size as i64 },
@@ -731,16 +710,28 @@ impl DataBase {
 
         let mut cursor = self.earnings.aggregate(pipeline).await?;
         let mut query_response = Vec::new();
+        let mut earnings_summary = None;
+
         while let Some(result) = cursor.next().await {
             match result {
                 Ok(mut record) => {
-                    record.remove("_id");
+                    if let Some(earnings) = record.get("earnings_summary") {
+                        earnings_summary = Some(earnings.clone());
+                    }
+
+                    record.remove("earnings_summary");
+
                     query_response.push(record);
                 }
                 Err(e) => eprintln!("Error fetching document: {:?}", e),
             }
         }
-        // println!("{:?}",query_response);
-        Ok(query_response)
+
+        let result = doc! {
+            "earnings_summary": earnings_summary,
+            "pools": query_response
+        };
+
+        Ok(result)
     }
 }
