@@ -1,6 +1,7 @@
+use chrono::Utc;
 use serde::{Deserialize, Serialize};
 
-use crate::models::swap_history_model::SwapHistory;
+use crate::{models::{custom_error_model::CustomError, swap_history_model::SwapHistory}, utils::db_helper_utils::get_max_start_time_of_collection};
 use reqwest::Error as reqwestError;
 use super::db::DataBase;
 
@@ -128,12 +129,19 @@ impl SwapHistory{
     }
     pub async fn fetch_swap_history(db:&DataBase,pool:&str,interval:&str,count:&str,from:&str) -> Result<i64,reqwestError>{
         let url = generate_api_url(&pool,&interval, &from, &count);
-        println!("url - {}",url);
-        let response: ApiResponse = reqwest::get(&url).await?.json::<ApiResponse>().await?;
-        
-        let end_time = response.meta.end_time.clone();
-        let end_time = end_time.parse::<i64>().unwrap();
-        self::SwapHistory::store_swap_history(db, pool, response).await;
-        Ok(end_time)
+        let most_updated_start_in_db = get_max_start_time_of_collection(&db.depth_history).await.unwrap_or(0);
+        if most_updated_start_in_db <= from.parse::<i64>().unwrap_or(0) as i64{
+            print!("Request time is ahead of the db's latest record!");
+            Ok(Utc::now().timestamp())
+        }
+        else{
+            println!("url - {}",url);
+            let response: ApiResponse = reqwest::get(&url).await?.json::<ApiResponse>().await?;
+            
+            let end_time = response.meta.end_time.clone();
+            let end_time = end_time.parse::<i64>().unwrap();
+            self::SwapHistory::store_swap_history(db, pool, response).await;
+            Ok(end_time)
+        }
     }
 }

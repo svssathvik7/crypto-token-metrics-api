@@ -1,6 +1,7 @@
+use chrono::Utc;
 use serde::{Deserialize, Serialize};
 
-use crate::models::depth_history_model::PoolDepthPriceHistory;
+use crate::{models::depth_history_model::PoolDepthPriceHistory, utils::db_helper_utils::get_max_start_time_of_collection};
 use mongodb::error::Error as mongoError;
 use reqwest::Error as reqwestError;
 use super::db::DataBase;
@@ -53,19 +54,17 @@ pub struct Interval {
 // imitating the actual midgard api response style
 #[derive(Debug,Deserialize,Serialize)]
 pub struct ApiResponse{
-    // if count > 1 we get vector of interval type objects
     pub intervals : Vec<Interval>,
     pub meta : Meta
 }
 
 impl PoolDepthPriceHistory{
-    pub async fn store_price_history(db: &DataBase, data: ApiResponse) -> Result<(), mongoError> {
+    pub async fn store_price_history(db: &DataBase, data: ApiResponse){
         for interval in data.intervals {
             match PoolDepthPriceHistory::try_from(interval) {
                 Ok(pool_history_interval) => {
                     if let Err(e) = db.depth_history.insert_one(pool_history_interval).await {
                         eprint!("Error inserting record: {:?}", e);
-                        return Err(e);  // Return error if insertion fails
                     }
                 }
                 Err(e) => {
@@ -73,16 +72,23 @@ impl PoolDepthPriceHistory{
                 }
             }
         }
-        Ok(())
+        ()
     }
     pub async fn fetch_price_history(db:&DataBase,pool:&str,interval:&str,count:&str,from:&str) -> Result<i64,reqwestError>{
         let url = generate_api_url(&pool,&interval,&from,&count);
         println!("{}",url);
-        let response = reqwest::get(&url).await?.json::<ApiResponse>().await?;
-        // println!("{:?}",response);
-        let end_time = response.meta.end_time.clone();
-        let end_time = end_time.parse::<i64>().unwrap();
-        self::PoolDepthPriceHistory::store_price_history(db,response).await;
-        Ok(end_time)
+        let from_time:i64 = from.parse().unwrap_or(0);
+        if from_time >= get_max_start_time_of_collection(&db.depth_history).await.unwrap_or(Utc::now().timestamp()) as i64{
+            eprint!("Can't access future timestamps!");
+            Ok(Utc::now().timestamp())
+        }
+        else{
+            let response = reqwest::get(&url).await?.json::<ApiResponse>().await?;
+            // println!("{:?}",response);
+            let end_time = response.meta.end_time.clone();
+            let end_time = end_time.parse::<i64>().unwrap();
+            self::PoolDepthPriceHistory::store_price_history(db,response).await;
+            Ok(end_time)
+        }
     }
 }

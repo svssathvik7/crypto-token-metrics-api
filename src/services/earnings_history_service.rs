@@ -1,9 +1,10 @@
 use std::error::Error;
 
+use chrono::Utc;
 use reqwest::Error as reqwestError;
 use serde::{Deserialize, Serialize};
 use mongodb::bson::oid::ObjectId;
-use crate::models::earning_history_model::{PoolEarningHistory, PoolEarningSummary};
+use crate::{models::earning_history_model::{PoolEarningHistory, PoolEarningSummary}, utils::db_helper_utils::get_max_start_time_of_collection};
 
 use super::db::DataBase;
 
@@ -127,11 +128,18 @@ impl PoolEarningHistory{
     pub async fn fetch_earning_history(db:&DataBase,interval:&str,count:&str,from:&str) -> Result<i64,reqwestError>{
         let url = generate_api_url(interval, from, count);
         print!("url - {}",url);
-        let response: ApiResponse = reqwest::get(&url).await?.json::<ApiResponse>().await?;
-        // println!("{:?}",response);
-        let end_time = response.meta.end_time.clone();
-        let end_time = end_time.parse::<i64>().unwrap();
-        self::PoolEarningHistory::store_earning_history(db, response).await;
-        Ok(end_time)
+        let from_time:i64 = from.parse().unwrap_or(0);
+        if from_time >= get_max_start_time_of_collection(&db.depth_history).await.unwrap_or(Utc::now().timestamp()) as i64{
+            eprint!("Can't access future timestamps!");
+            Ok(Utc::now().timestamp())
+        }
+        else{
+            let response: ApiResponse = reqwest::get(&url).await?.json::<ApiResponse>().await?;
+            // println!("{:?}",response);
+            let end_time = response.meta.end_time.clone();
+            let end_time = end_time.parse::<i64>().unwrap();
+            self::PoolEarningHistory::store_earning_history(db, response).await;
+            Ok(end_time)
+        }
     }
 }

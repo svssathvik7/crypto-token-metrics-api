@@ -548,7 +548,6 @@ impl DataBase {
                 Err(e) => eprintln!("Error fetching document: {:?}", e),
             }
         }
-
         let result = doc! {
             "earnings_summary": earnings_summary,
             "pools": query_response

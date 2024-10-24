@@ -20,7 +20,7 @@ pub async fn run_cron_job(db:Data<DataBase>,pool:&str){
         let start_time = Instant::now();
 
         if let Err(e) = perform_all_tasks(&db, &pool).await {
-            eprintln!("Error: Task(s) failed: {:?}", e);
+            eprintln!("Error: Task(s) failed due to several reasons!");
         } else {
             println!("All fetches completed.");
         }
