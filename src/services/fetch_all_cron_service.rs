@@ -1,3 +1,4 @@
+use actix_web::web::Data;
 use chrono::Utc;
 use tokio::time::{interval, Duration};
 use dotenv::dotenv;
@@ -9,7 +10,7 @@ use super::db::DataBase;
 const ONE_HOUR_SECS:u64 = 3_600;
 
 
-pub async fn run_cron_job(db:&DataBase,pool:String){
+pub async fn run_cron_job(db:Data<DataBase>,pool:&str){
     dotenv().ok();
 
     let mut interval = interval(Duration::from_secs(ONE_HOUR_SECS));
@@ -18,7 +19,7 @@ pub async fn run_cron_job(db:&DataBase,pool:String){
         interval.tick().await; // Wait for the next tick
         let start_time = Instant::now();
 
-        if let Err(e) = perform_all_tasks(db, &pool).await {
+        if let Err(e) = perform_all_tasks(&db, &pool).await {
             eprintln!("Error: Task(s) failed: {:?}", e);
         } else {
             println!("All fetches completed.");
