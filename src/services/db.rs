@@ -5,6 +5,7 @@ use dotenv::dotenv;
 use futures_util::StreamExt;
 use mongodb::bson::Document;
 use mongodb::{bson::doc, Client, Collection};
+use serde::de::DeserializeOwned;
 
 use crate::models::api_request_param_model::QueryParams;
 use crate::models::custom_error_model::CustomError;
@@ -15,6 +16,8 @@ use crate::models::{
     swap_history_model::SwapHistory,
 };
 
+
+const api_start_time:i64 = 1_647_913_096;
 pub fn get_seconds_per_interval(interval: &str) -> i32 {
     match interval {
         "hour" => 3600,
@@ -57,6 +60,42 @@ impl DataBase {
         }
     }
 
+    // helper function
+    pub async fn get_max_start_time_of_collection<T>(
+        &self,
+        collection: &Collection<T>,
+    ) -> Result<i64, CustomError>
+    where
+        T: DeserializeOwned + Unpin + Send + Sync,
+    {
+        let pipeline = vec![
+            doc! {
+                "$group": {
+                    "_id": null,
+                    "max_start_time": { "$max": "$start_time" }
+                }
+            },
+            doc! { "$limit": 1 },
+        ];
+    
+        let mut cursor = collection.aggregate(pipeline).await?;
+    
+        if let Some(result) = cursor.next().await {
+            match result {
+                Ok(doc) => {
+                    let max_start_time = doc.get_i64("max_start_time").unwrap_or(0);
+                    Ok(max_start_time)
+                }
+                Err(e) => {
+                    eprintln!("Failed to fetch max start_time: {}", e);
+                    Err(CustomError::DatabaseError(e.to_string()))
+                }
+            }
+        } else {
+            Ok(api_start_time)
+        }
+    }    
+
     // /depths
     pub async fn get_depth_price_history_api(
         &self,
@@ -89,7 +128,7 @@ impl DataBase {
             query.insert("pool", pool);
         }
 
-        let limit: i16 = if let Some(limit) = limit { limit } else { 400 };
+        let limit: i16 = if let Some(limit) = limit { limit } else { if let Some(count) = count {count as i16} else {400} };
 
         if let Some(from) = from {
             query.insert("start_time", doc! { "$gte": from as i64 });
@@ -97,7 +136,7 @@ impl DataBase {
             let calc_start = if let Some(to) = to {
                 to as i64
             } else {
-                Utc::now().timestamp() as i64
+                self.get_max_start_time_of_collection(&self.depth_history).await.unwrap_or(Utc::now().timestamp())
             };
             let count = count.unwrap_or(400) as i64;
             let queried_interval_duration = seconds_per_interval as i64;
@@ -122,36 +161,8 @@ impl DataBase {
             doc! { "end_time": -1 }
         };
         let skip_size = (page - 1) * (limit as u64);
-        let interval = interval.unwrap_or(String::from("hour"));
         println!("{}", query);
-        if interval == "hour" {
-            println!("{}", query);
-            let mut cursor = self
-                .depth_history
-                .find(query)
-                .skip(skip_size as u64)
-                .limit(limit as i64)
-                .sort(sort_filter)
-                .await?;
-
-            let mut query_response = Vec::new();
-
-            while let Some(result) = cursor.next().await {
-                match result {
-                    Ok(record) => {
-                        let mut record = mongodb::bson::to_document(&record)
-                            .expect("Error parsing the document");
-                        record.remove("_id");
-                        query_response.push(record);
-                    }
-                    Err(e) => {
-                        eprintln!("Failed fetching data! {}", e);
-                    }
-                }
-            }
-            // println!("{:?}",query_response);
-            return Ok(query_response);
-        }
+        
         let pipeline = vec![
             doc! { "$match": query }, // Match stage
             doc! {
