@@ -1,4 +1,4 @@
-use actix_web::{web, HttpResponse, Responder};
+use actix_web::{web, HttpResponse};
 use chrono::Utc;
 use crate::{models::{api_request_param_model::{validate_query, QueryParams}, earning_history_model::PoolEarningHistory}, services::db::DataBase};
 

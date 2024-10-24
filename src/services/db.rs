@@ -18,7 +18,7 @@ use crate::models::{
 use crate::utils::db_helper_utils::{build_query_sort_skip, get_seconds_per_interval};
 
 
-const api_start_time:i64 = 1_647_913_096;
+const API_START_TIME:i64 = 1_647_913_096;
 
 pub struct DataBase {
     pub depth_history: Collection<PoolDepthPriceHistory>,
@@ -82,7 +82,7 @@ impl DataBase {
                 }
             }
         } else {
-            Ok(api_start_time)
+            Ok(API_START_TIME)
         }
     }    
 
