@@ -76,7 +76,11 @@ impl PoolDepthPriceHistory{
     pub async fn fetch_price_history(db:&DataBase,pool:&str,interval:&str,count:&str,from:&str) -> Result<i64,reqwestError>{
         let url = generate_api_url(&pool,&interval,&from,&count);
         println!("{}",url);
-        
+        let api_response = reqwest::get(&url).await?;
+        let raw_body = api_response.text().await?;
+
+        println!("Raw response: {}", raw_body);
+
         let response = reqwest::get(&url).await?.json::<ApiResponse>().await?;
         // println!("{:?}",response);
         let end_time = response.meta.end_time.clone();

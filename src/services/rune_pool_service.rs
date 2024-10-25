@@ -53,6 +53,11 @@ impl RunePool{
     pub async fn fetch_rune_pool(db:&DataBase,interval:&str,count:&str,from:&str) -> Result<i64, reqwestError>{
         let url = generate_api_url(interval, from, count);
         println!("url - {}",&url);
+        let api_response = reqwest::get(&url).await?;
+        let raw_body = api_response.text().await?;
+
+        println!("Raw response: {}", raw_body);
+
         let response = reqwest::get(&url).await?.json::<ApiResponse>().await?;
         let end_time = response.meta.end_time.clone();
         let end_time = end_time.parse::<i64>().unwrap();

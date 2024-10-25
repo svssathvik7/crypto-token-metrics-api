@@ -1,31 +1,20 @@
-pub fn parse_to_f64(value: &str, field_name: &str) -> Result<f64, Box<dyn std::error::Error>> {
-    value.parse::<f64>().map_err(|_| {
-        format!("Failed to parse {} as f64", field_name).into()
+use std::error::Error as stdError;
+
+pub fn parse_to_type<T>(value: &str, field_name: &str) -> Result<T, Box<dyn stdError>>
+where
+    T: std::str::FromStr,
+    T::Err: stdError + 'static,
+{
+    value.parse::<T>().map_err(|_| {
+        format!("Failed to parse {} as {}", field_name, std::any::type_name::<T>()).into()
     })
 }
 
-pub fn parse_to_i64(value: &str, field_name: &str) -> Result<i64, Box<dyn std::error::Error>> {
-    value.parse::<i64>().map_err(|_| {
-        format!("Failed to parse {} as i64", field_name).into()
-    })
-}
-
-pub fn parse_to_u64(value: &str,field_name: &str) -> Result<u64,Box<dyn std::error::Error>>{
-    value.parse::<u64>().map_err(|_| {
-        format!("Failed to parse {} as u64", field_name).into()
-    })
-}
 
 // macros for parsing
 #[macro_export]
 macro_rules! parse_field {
-    ($interval:expr, $field:ident, f64) => {
-        crate::utils::parser_utils::parse_to_f64(&$interval.$field, stringify!($field))?
-    };
-    ($interval:expr, $field:ident, i64) => {
-        crate::utils::parser_utils::parse_to_i64(&$interval.$field, stringify!($field))?
-    };
-    ($interval:expr, $field:ident, u64) => {
-        crate::utils::parser_utils::parse_to_u64(&$interval.$field, stringify!($field))?
+    ($interval:expr, $field:ident, $type:ty) => {
+        crate::utils::parser_utils::parse_to_type::<$type>(&$interval.$field, stringify!($field))?
     };
 }
