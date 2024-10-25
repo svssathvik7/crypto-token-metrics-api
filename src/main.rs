@@ -2,7 +2,8 @@
 
 use actix_web::{self, web::{scope, Data}, App, HttpServer};
 use api_docs::ApiDoc;
-use utoipa::{openapi, OpenApi};
+use utoipa::OpenApi;
+pub mod controllers;
 use routes::{depth_route, earning_route::{self}, rune_pool_route, swap_route::{self}};
 use services::{db::DataBase, fetch_all_cron_service::run_cron_job};
 use utoipa_swagger_ui::SwaggerUi;
