@@ -1,6 +1,6 @@
 use mongodb::bson::oid::ObjectId;
 use serde::{Deserialize, Serialize};
-use utoipa::ToSchema;
+use utoipa::{openapi::schema, ToSchema};
 
 use crate::services::rune_pool_service::Interval;
 use std::error::Error as stdError;
@@ -13,9 +13,13 @@ fn generate_error_text(field_name:&str) -> String{
 pub struct RunePool{
     #[schema(value_type = String, example = "60d5ec49a1c4b5048c0e5c70")]
     pub _id : ObjectId,
+    #[schema(example=391)]
     pub count : f64,
+    #[schema(example=1727114400)]
     pub end_time : i64,
+    #[schema(example=1727110800)]
     pub start_time : i64,
+    #[schema(example=400984606438789.0)]
     pub units : f64
 }
 

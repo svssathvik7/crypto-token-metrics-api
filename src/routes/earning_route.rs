@@ -18,7 +18,7 @@ use crate::{models::{api_request_param_model::{validate_query, QueryParams}, ear
         ("count" = Option<u32>, Query, description = "Total records that are to be fetched (1-400)")
     ),
     responses(
-        (status = 200, description = "List of pool earnings", body = Vec<PoolEarningsResponse>),
+        (status = 200, description = "List of pool earnings", body = Vec<PoolEarningHistory>),
         (status = 400, description = "Bad request - Invalid parameters"),
         (status = 500, description = "Internal server error")
     ),
