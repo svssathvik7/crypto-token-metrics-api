@@ -1,21 +1,12 @@
 use std::env;
-
-use chrono::Utc;
 use dotenv::dotenv;
-use futures_util::StreamExt;
-use mongodb::bson::Document;
-use mongodb::{bson::doc, Client, Collection};
-
-use crate::models::api_request_param_model::QueryParams;
-use crate::models::custom_error_model::CustomError;
+use mongodb::{Client, Collection};
 use crate::models::{
     depth_history_model::PoolDepthPriceHistory,
     earning_history_model::{PoolEarningHistory, PoolEarningSummary},
     rune_pool_model::RunePool,
     swap_history_model::SwapHistory,
 };
-use crate::utils::db_helper_utils::{build_query_sort_skip, get_max_start_time_of_collection, get_seconds_per_interval};
-
 pub struct DataBase {
     pub depth_history: Collection<PoolDepthPriceHistory>,
     pub earnings: Collection<PoolEarningHistory>,
