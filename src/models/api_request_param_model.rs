@@ -1,17 +1,24 @@
 use actix_web::HttpResponse;
 use serde::{Deserialize, Serialize};
-use utoipa::ToSchema;
+use utoipa::{openapi::schema, ToSchema};
 
 #[derive(Debug,Serialize,Deserialize,ToSchema)]
 pub struct QueryParams{
+    #[schema(example = "BTC.BTC")]
     pub pool : Option<String>,
+    #[schema(example = "day")]
     pub interval : Option<String>,
+    #[schema(example="100")]
     pub count : Option<u32>,
     pub to : Option<u64>,
     pub from : Option<u64>,
+    #[schema(example="2")]
     pub page : Option<u64>,
+    #[schema(example="start_time")]
     pub sort_by : Option<String>,
+    #[schema(example="-1")]
     pub sort_order : Option<i8>,
+    #[schema(example="40")]
     pub limit : Option<i16> 
 }
 
