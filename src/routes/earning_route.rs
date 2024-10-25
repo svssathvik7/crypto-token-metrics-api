@@ -2,6 +2,28 @@ use actix_web::{web, HttpResponse};
 use chrono::Utc;
 use crate::{models::{api_request_param_model::{validate_query, QueryParams}, earning_history_model::PoolEarningHistory}, services::db::DataBase};
 
+
+#[utoipa::path(
+    get,
+    path = "/earnings",
+    params(
+        ("from" = Option<u64>, Query, description = "Start time Unix timestamp "),
+        ("to" = Option<u64>, Query, description = "End time Unix timestamp"),
+        ("pool" = Option<String>, Query, description = "Pool identifier like BTC.BTC"),
+        ("page" = Option<u64>, Query, description = "Page number (minimum: 1)"),
+        ("limit" = Option<u32>, Query, description = "Items per page (1-400)"),
+        ("sort_by" = Option<String>, Query, description = "Field to sort by"),
+        ("sort_order" = Option<i8>, Query, description = "1 for ascending order and -1 for descending order"),
+        ("interval" = Option<String>, Query, description = "Time interval for aggregation (hour, day, week, month, quarter, year)"),
+        ("count" = Option<u32>, Query, description = "Total records that are to be fetched (1-400)")
+    ),
+    responses(
+        (status = 200, description = "List of pool earnings", body = Vec<PoolEarningsResponse>),
+        (status = 400, description = "Bad request - Invalid parameters"),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "Earnings History"
+)]
 #[actix_web::get("")]
 pub async fn get_earnings_history(db:web::Data<DataBase>,params:web::Query<QueryParams>) -> HttpResponse{
     if let Err(validation_err) = validate_query(&params) {
