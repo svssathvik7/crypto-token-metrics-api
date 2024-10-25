@@ -5,10 +5,6 @@ use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
 use crate::{parse_field, services::depth_history_service::Interval};
 
-fn generate_error_text(field_name:&str) -> String{
-    format!("Incorrect {} format",field_name)
-}
-
 #[derive(Deserialize,Serialize,Debug,ToSchema)]
 pub struct PoolDepthPriceHistory{
     #[schema(value_type = String, example = "60d5ec49a1c4b5048c0e5c70")]

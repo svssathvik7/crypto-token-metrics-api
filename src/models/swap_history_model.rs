@@ -2,7 +2,7 @@ use mongodb::bson::oid::ObjectId;
 use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
 use std::error::Error as stdError;
-use crate::{parse_field, services::swap_history_service::Interval, utils::parser_utils::{parse_to_f64, parse_to_i64}};
+use crate::{parse_field, services::swap_history_service::Interval};
 
 #[derive(Debug,Serialize,Deserialize,ToSchema)]
 pub struct SwapHistory {
