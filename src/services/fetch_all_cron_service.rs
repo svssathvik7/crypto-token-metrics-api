@@ -38,7 +38,7 @@ async fn perform_all_tasks(db: &DataBase, pool: &str) -> Result<(), ()> {
     // Collect task results but discard error messages
     let tasks = vec![
         SwapHistory::fetch_swap_history(db, pool, interval_str, "400", start_timer).await,
-        RunePool::fetch_rune_pool(db, "hour", interval_str, start_timer).await,
+        RunePool::fetch_rune_pool(db, "hour", "400", start_timer).await,
         PoolEarningHistory::fetch_earning_history(db, interval_str, "400", start_timer).await,
         PoolDepthPriceHistory::fetch_price_history(db, "BTC.BTC", interval_str, "400", start_timer).await,
     ];

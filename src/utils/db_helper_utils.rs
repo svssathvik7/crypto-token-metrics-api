@@ -20,7 +20,7 @@ pub fn get_seconds_per_interval(interval: &str) -> i32 {
 }
 
 // helper function
-pub async fn get_max_start_time_of_collection<T>(
+pub async fn get_max_end_time_of_collection<T>(
     collection: &Collection<T>,
 ) -> Result<i64, CustomError>
 where
@@ -30,7 +30,7 @@ where
         doc! {
             "$group": {
                 "_id": null,
-                "max_start_time": { "$max": "$start_time" }
+                "max_start_time": { "$max": "$end_time" }
             }
         },
         doc! { "$limit": 1 },
@@ -45,7 +45,7 @@ where
                 Ok(max_start_time)
             }
             Err(e) => {
-                eprintln!("Failed to fetch max start_time: {}", e);
+                eprintln!("Failed to fetch max end_time: {}", e);
                 Err(CustomError::DatabaseError(e.to_string()))
             }
         }
@@ -65,7 +65,7 @@ pub async fn build_query_sort_skip(
     // Default values
     let page = page.unwrap_or(1);
 
-    let limit: i16 = limit.unwrap_or_else(|| count.unwrap_or(400) as i16);
+    let limit: i16 = limit.unwrap_or_else(|| count.unwrap_or(20) as i16);
 
     let mut query = Document::new();
 

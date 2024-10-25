@@ -2,7 +2,7 @@ use chrono::Utc;
 use futures_util::StreamExt;
 use mongodb::bson::{doc, Document};
 
-use crate::{models::{api_request_param_model::QueryParams, custom_error_model::CustomError}, services::db::DataBase, utils::db_helper_utils::{build_query_sort_skip, get_max_start_time_of_collection, get_seconds_per_interval}};
+use crate::{models::{api_request_param_model::QueryParams, custom_error_model::CustomError}, services::db::DataBase, utils::db_helper_utils::{build_query_sort_skip, get_max_end_time_of_collection, get_seconds_per_interval}};
 
 impl DataBase{
         // /depths
@@ -42,22 +42,7 @@ impl DataBase{
                 let calc_start = if let Some(to) = to {
                     to as i64
                 } else {
-                    get_max_start_time_of_collection(&self.depth_history).await.unwrap_or(Utc::now().timestamp())
-                };
-                let count = count.unwrap_or(400) as i64;
-                let queried_interval_duration = seconds_per_interval as i64;
-                query.insert(
-                    "start_time",
-                    doc! {"$gte": calc_start-(count*queried_interval_duration) as i64},
-                );
-            }
-            if let Some(from) = from {
-                query.insert("start_time", doc! { "$gte": from as i64 });
-            } else {
-                let calc_start = if let Some(to) = to {
-                    to as i64
-                } else {
-                    get_max_start_time_of_collection(&self.depth_history).await.unwrap_or(Utc::now().timestamp())
+                    get_max_end_time_of_collection(&self.depth_history).await.unwrap_or(Utc::now().timestamp())
                 };
                 let count = count.unwrap_or(400) as i64;
                 let queried_interval_duration = seconds_per_interval as i64;
@@ -81,50 +66,50 @@ impl DataBase{
                                     { "$mod": [
                                         { "$subtract": ["$end_time", 1] },
                                         seconds_per_interval
-                                    ]}
-                                ]
+                                        ]}
+                                        ]
+                                    }
+                                },
+                                "assetDepth": { "$last": "$asset_depth" },
+                                "assetPrice": { "$last": "$asset_price" },
+                                "assetPriceUSD": { "$last": "$asset_price_usd" },
+                                "liquidityUnits": { "$last": "$liquidity_units" },
+                                "luvi": { "$last": "$luvi" },
+                                "membersCount": { "$last": "$members_count" },
+                                "runeDepth": { "$last": "$rune_depth" },
+                                "synthSupply": { "$last": "$synth_supply" },
+                                "synthUnits": { "$last": "$synth_units" },
+                                "units": { "$last": "$units" },
+                                "pool" : {"$last" : "$pool"}
                             }
                         },
-                        "assetDepth": { "$last": "$asset_depth" },
-                        "assetPrice": { "$last": "$asset_price" },
-                        "assetPriceUSD": { "$last": "$asset_price_usd" },
-                        "liquidityUnits": { "$last": "$liquidity_units" },
-                        "luvi": { "$last": "$luvi" },
-                        "membersCount": { "$last": "$members_count" },
-                        "runeDepth": { "$last": "$rune_depth" },
-                        "synthSupply": { "$last": "$synth_supply" },
-                        "synthUnits": { "$last": "$synth_units" },
-                        "units": { "$last": "$units" },
-                        "pool" : {"$last" : "$pool"}
-                    }
-                },
-                doc! { "$project": {
-                    "_id": 0,
-                    "pool" : 1,
-                    "startTime": {
-                        "$subtract": [ "$_id.interval_start", { "$mod": [ "$_id.interval_start", seconds_per_interval ] }]
-                    },
-                    "endTime": {
-                        "$add": [
-                            { "$subtract": [ "$_id.interval_start", { "$mod": [ "$_id.interval_start", seconds_per_interval ] }] },
-                            seconds_per_interval
-                        ]
-                    },
-                    "assetDepth": 1,
-                    "assetPrice": 1,
-                    "assetPriceUSD": 1,
-                    "liquidityUnits": 1,
-                    "luvi": 1,
-                    "membersCount": 1,
-                    "runeDepth": 1,
-                    "synthSupply": 1,
-                    "synthUnits": 1,
-                    "units": 1,
-                    "pool" : 1
-                }},
-                doc! { "$sort": sort_filter },
-                doc! { "$skip": skip_size as i64 },
-                doc! { "$limit": limit as i64 },
+                        doc! { "$project": {
+                            "_id": 0,
+                            "pool" : 1,
+                            "startTime": {
+                                "$subtract": [ "$_id.interval_start", { "$mod": [ "$_id.interval_start", seconds_per_interval ] }]
+                            },
+                            "endTime": {
+                                "$add": [
+                                    { "$subtract": [ "$_id.interval_start", { "$mod": [ "$_id.interval_start", seconds_per_interval ] }] },
+                                    seconds_per_interval
+                                    ]
+                                },
+                                "assetDepth": 1,
+                                "assetPrice": 1,
+                                "assetPriceUSD": 1,
+                                "liquidityUnits": 1,
+                                "luvi": 1,
+                                "membersCount": 1,
+                                "runeDepth": 1,
+                                "synthSupply": 1,
+                                "synthUnits": 1,
+                                "units": 1,
+                                "pool" : 1
+                            }},
+                            doc! { "$sort": sort_filter },
+                            doc! { "$skip": skip_size as i64 },
+                            doc! { "$limit": count.unwrap_or(400) as i64 },
             ];
     
             let mut cursor = self.depth_history.aggregate(pipeline).await?;
