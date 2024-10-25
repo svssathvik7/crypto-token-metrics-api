@@ -1,1 +1,4 @@
 pub mod depth_history_api_controller;
+pub mod swaps_history_api_controller;
+pub mod rune_pool_history_api_controller;
+pub mod earnings_history_api_controller;
