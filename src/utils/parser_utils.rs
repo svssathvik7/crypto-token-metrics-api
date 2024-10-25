@@ -14,9 +14,9 @@ pub fn parse_to_i64(value: &str, field_name: &str) -> Result<i64, Box<dyn std::e
 #[macro_export]
 macro_rules! parse_field {
     ($interval:expr, $field:ident, f64) => {
-        parse_to_f64(&$interval.$field, stringify!($field))?
+        crate::utils::parser_utils::parse_to_f64(&$interval.$field, stringify!($field))?
     };
     ($interval:expr, $field:ident, i64) => {
-        parse_to_i64(&$interval.$field, stringify!($field))?
+        crate::utils::parser_utils::parse_to_i64(&$interval.$field, stringify!($field))?
     };
 }

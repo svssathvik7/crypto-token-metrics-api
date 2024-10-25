@@ -1,3 +1,4 @@
+use chrono::Utc;
 use serde::{Deserialize, Serialize};
 
 use crate::models::depth_history_model::PoolDepthPriceHistory;
@@ -79,7 +80,7 @@ impl PoolDepthPriceHistory{
         let response = reqwest::get(&url).await?.json::<ApiResponse>().await?;
         // println!("{:?}",response);
         let end_time = response.meta.end_time.clone();
-        let end_time = end_time.parse::<i64>().unwrap();
+        let end_time = end_time.parse::<i64>().unwrap_or(Utc::now().timestamp());
         self::PoolDepthPriceHistory::store_price_history(db,response).await;
         // println!("{}","in");
         Ok(end_time)
