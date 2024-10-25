@@ -3,6 +3,27 @@ use chrono::Utc;
 
 use crate::{models::{api_request_param_model::{validate_query, QueryParams}, swap_history_model::SwapHistory}, services::db::DataBase};
 
+#[utoipa::path(
+    get,
+    path = "/swaps",
+    params(
+        ("pool" = Option<String>, Query, description = "Represents the token type"),
+        ("interval" = Option<String>, Query, description = "Time interval for the data (e.g., day, week, month, quarter, year). Defaults to hour if not provided."),
+        ("from" = Option<f64>, Query, description = "Start time for fetching data in Unix timestamp format."),
+        ("to" = Option<f64>, Query, description = "End time for fetching data in Unix timestamp format. Defaults to 1729666800.0 if not provided."),
+        ("count" = Option<i64>, Query, description = "Limits the number of documents in the response."),
+        ("page" = Option<i64>, Query, description = "Page number for pagination. Defaults to 1 if not provided."),
+        ("sort_by" = Option<String>, Query, description = "Field by which to sort the results (e.g., timestamp, price). Defaults to startTime if not provided."),
+        ("limit" = Option<i16>, Query, description = "Works for pagination by controlling the page size, has a fallback to count")
+    ),
+    responses(
+        (status = 200, description = "Successfully fetched swaps history data", body = Vec<PoolDepthPriceHistory>),
+        (status = 400, description = "Bad request!"),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "Swap History",
+    operation_id = "fetchSwapsHistoryData"
+)]
 #[actix_web::get("")]
 pub async fn get_swaps_history(db:web::Data<DataBase>,params:web::Query<QueryParams>) -> HttpResponse{
     if let Err(validation_err) = validate_query(&params) {
