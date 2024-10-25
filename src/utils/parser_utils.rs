@@ -10,6 +10,12 @@ pub fn parse_to_i64(value: &str, field_name: &str) -> Result<i64, Box<dyn std::e
     })
 }
 
+pub fn parse_to_u64(value: &str,field_name: &str) -> Result<u64,Box<dyn std::error::Error>>{
+    value.parse::<u64>().map_err(|_| {
+        format!("Failed to parse {} as u64", field_name).into()
+    })
+}
+
 // macros for parsing
 #[macro_export]
 macro_rules! parse_field {
@@ -18,5 +24,8 @@ macro_rules! parse_field {
     };
     ($interval:expr, $field:ident, i64) => {
         crate::utils::parser_utils::parse_to_i64(&$interval.$field, stringify!($field))?
+    };
+    ($interval:expr, $field:ident, u64) => {
+        crate::utils::parser_utils::parse_to_u64(&$interval.$field, stringify!($field))?
     };
 }

@@ -2,7 +2,7 @@ use std::error::Error;
 use reqwest::Error as reqwestError;
 use serde::{Deserialize, Serialize};
 use mongodb::bson::oid::ObjectId;
-use crate::models::earning_history_model::{PoolEarningHistory, PoolEarningSummary};
+use crate::{models::earning_history_model::{PoolEarningHistory, PoolEarningSummary}, parse_field};
 
 use super::db::DataBase;
 
@@ -67,29 +67,18 @@ pub struct ApiResponse{
 impl PoolEarningHistory{
     pub async fn store_earning_history(db: &DataBase, data: ApiResponse) -> Result<(), Box<dyn Error>> {
         for interval in data.intervals {
-            let _id = ObjectId::new();
-    
-            let avg_node_count = interval.avg_node_count.parse::<f64>().expect(&generate_error_text("avgNodeCount"));
-            let block_rewards = interval.block_rewards.parse::<f64>().expect(&generate_error_text("blockRewards"));
-            let bonding_earnings = interval.bonding_earnings.parse::<f64>().expect(&generate_error_text("bondingEarnings"));
-            let earnings = interval.earnings.parse::<u64>().expect(&generate_error_text("earnings"));
-            let end_time = interval.end_time.as_str().parse::<i64>().expect(&generate_error_text("endTime"));
-            let liquidity_earnings = interval.liquidity_earnings.parse::<f64>().expect(&generate_error_text("liquidityEarnings"));
-            let liquidity_fees = interval.liquidity_fees.parse::<u64>().expect(&generate_error_text("liquidityFees"));
-            let start_time = interval.start_time.as_str().parse::<i64>().expect(&generate_error_text("startTime"));
-            let rune_price_usd = interval.rune_price_usd.parse::<f64>().expect(&generate_error_text("runePriceUSD"));
     
             let pool_earning_summary = PoolEarningSummary {
-                _id,
-                avg_node_count,
-                block_rewards,
-                bonding_earnings,
-                earnings,
-                end_time,
-                liquidity_earnings,
-                liquidity_fees,
-                start_time,
-                rune_price_usd,
+                _id: ObjectId::new(),
+                avg_node_count: parse_field!(interval, avg_node_count, f64),
+                block_rewards: parse_field!(interval, block_rewards, f64),
+                bonding_earnings: parse_field!(interval, bonding_earnings, f64),
+                earnings: parse_field!(interval, earnings, u64),
+                end_time: parse_field!(interval, end_time, i64),
+                liquidity_earnings: parse_field!(interval, liquidity_earnings, f64),
+                liquidity_fees: parse_field!(interval, liquidity_fees, u64),
+                start_time: parse_field!(interval, start_time, i64),
+                rune_price_usd: parse_field!(interval, rune_price_usd, f64),
             };
     
             let earnings_summary_id = db.earnings_summary.insert_one(pool_earning_summary).await.unwrap().inserted_id;
@@ -102,14 +91,14 @@ impl PoolEarningHistory{
                 let pool_earnings = PoolEarningHistory {
                     _id: ObjectId::new(),
                     pool: pool.pool.clone(),
-                    asset_liquidity_fees: pool.asset_liquidity_fees.parse::<f64>().expect(&generate_error_text("assetLiquidityFees")),
-                    earning: pool.earnings.parse::<u64>().expect(&generate_error_text("earnings")),
-                    rewards: pool.rewards.parse::<f64>().expect(&generate_error_text("rewards")),
-                    rune_liquidity_fees: pool.rune_liquidity_fees.parse::<f64>().expect(&generate_error_text("runeLiquidityFees")),
-                    saver_earning: pool.saver_earning.parse::<f64>().expect(&generate_error_text("saverEarning")),
-                    total_liquidity_fees_rune: pool.total_liquidity_fees_rune.parse::<f64>().expect(&generate_error_text("totalLiquidityFeesRune")),
-                    start_time: interval.start_time.as_str().parse::<i64>().expect(&generate_error_text("startTime")),
-                    end_time: interval.end_time.as_str().parse::<i64>().expect(&generate_error_text("endTime")),
+                    asset_liquidity_fees: parse_field!(pool, asset_liquidity_fees, f64),
+                    earning: parse_field!(pool, earnings, u64),
+                    rewards: parse_field!(pool, rewards, f64),
+                    rune_liquidity_fees: parse_field!(pool, rune_liquidity_fees, f64),
+                    saver_earning: parse_field!(pool, saver_earning, f64),
+                    total_liquidity_fees_rune: parse_field!(pool, total_liquidity_fees_rune, f64),
+                    start_time: parse_field!(interval, start_time, i64),
+                    end_time: parse_field!(interval, end_time, i64),
                     earnings_summary: earnings_summary_id.as_object_id().expect(&generate_error_text("earning summary id")),
                 };
     
