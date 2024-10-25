@@ -1,6 +1,6 @@
 use actix_web::HttpResponse;
 use serde::{Deserialize, Serialize};
-use utoipa::{openapi::schema, ToSchema};
+use utoipa::ToSchema;
 
 #[derive(Debug,Serialize,Deserialize,ToSchema)]
 pub struct QueryParams{
@@ -10,7 +10,9 @@ pub struct QueryParams{
     pub interval : Option<String>,
     #[schema(example="100")]
     pub count : Option<u32>,
+    #[schema(example = 1653373410)]
     pub to : Option<u64>,
+    #[schema(example = 1653373410)]
     pub from : Option<u64>,
     #[schema(example="2")]
     pub page : Option<u64>,

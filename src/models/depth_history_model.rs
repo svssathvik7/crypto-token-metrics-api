@@ -13,18 +13,31 @@ fn generate_error_text(field_name:&str) -> String{
 pub struct PoolDepthPriceHistory{
     #[schema(value_type = String, example = "60d5ec49a1c4b5048c0e5c70")]
     pub _id : ObjectId,
+    #[schema(example= "BTC.BTC")]
     pub pool : String,
+    #[schema(example = 709654.78)]
     pub asset_depth : f64,
+    #[schema(example = 70.10)]
     pub asset_price : f64,
+    #[schema(example = 8000.02)]
     pub asset_price_usd : f64,
+    #[schema(example = 1653373410)]
     pub end_time : i64,
+    #[schema(example = 700000.0)]
     pub liquidity_units : f64,
+    #[schema(example = 0.015679655950478353)]
     pub luvi : f64,
+    #[schema(example = 250)]
     pub members_count : i64,
+    #[schema(example = 1029722955087509.0)]
     pub rune_depth : f64,
+    #[schema(example = 1653373410)]
     pub start_time : i64,
+    #[schema(example = 59144723874.0)]
     pub synth_supply : f64,
+    #[schema(example = 215018050215853.0)]
     pub synth_units : f64,
+    #[schema(example = 576047677431855.0)]
     pub units : f64
 }
 
