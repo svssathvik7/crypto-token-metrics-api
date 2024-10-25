@@ -1,10 +1,8 @@
 use std::error::Error;
-
-use chrono::Utc;
 use reqwest::Error as reqwestError;
 use serde::{Deserialize, Serialize};
 use mongodb::bson::oid::ObjectId;
-use crate::{models::earning_history_model::{PoolEarningHistory, PoolEarningSummary}, utils::db_helper_utils::get_max_start_time_of_collection};
+use crate::models::earning_history_model::{PoolEarningHistory, PoolEarningSummary};
 
 use super::db::DataBase;
 

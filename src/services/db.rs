@@ -1,12 +1,10 @@
 use std::env;
 
-use actix_web::web::Json;
 use chrono::Utc;
 use dotenv::dotenv;
 use futures_util::StreamExt;
 use mongodb::bson::Document;
 use mongodb::{bson::doc, Client, Collection};
-use serde::de::DeserializeOwned;
 
 use crate::models::api_request_param_model::QueryParams;
 use crate::models::custom_error_model::CustomError;

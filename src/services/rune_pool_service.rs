@@ -1,7 +1,6 @@
-use chrono::Utc;
 use serde::{Deserialize, Serialize};
 
-use crate::{models::rune_pool_model::RunePool, utils::db_helper_utils::get_max_start_time_of_collection};
+use crate::models::rune_pool_model::RunePool;
 use reqwest::Error as reqwestError;
 use super::db::DataBase;
 

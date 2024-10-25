@@ -1,6 +1,6 @@
 use mongodb::bson::oid::ObjectId;
 use serde::{Deserialize, Serialize};
-use utoipa::{openapi::schema, ToSchema};
+use utoipa::ToSchema;
 
 
 #[derive(Debug,Serialize,Deserialize,ToSchema)]

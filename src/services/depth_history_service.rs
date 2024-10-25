@@ -1,8 +1,6 @@
-use chrono::Utc;
 use serde::{Deserialize, Serialize};
 
-use crate::{models::depth_history_model::PoolDepthPriceHistory, utils::db_helper_utils::get_max_start_time_of_collection};
-use mongodb::error::Error as mongoError;
+use crate::models::depth_history_model::PoolDepthPriceHistory;
 use reqwest::Error as reqwestError;
 use super::db::DataBase;
 

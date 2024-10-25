@@ -1,7 +1,6 @@
-use chrono::Utc;
 use serde::{Deserialize, Serialize};
 
-use crate::{models::{custom_error_model::CustomError, swap_history_model::SwapHistory}, utils::db_helper_utils::get_max_start_time_of_collection};
+use crate::models::swap_history_model::SwapHistory;
 use reqwest::Error as reqwestError;
 use super::db::DataBase;
 

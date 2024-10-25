@@ -2,7 +2,7 @@ use std::error::Error as stdError;
 use mongodb::bson::oid::ObjectId;
 
 use serde::{Deserialize, Serialize};
-use utoipa::{openapi::schema, ToSchema};
+use utoipa::ToSchema;
 use crate::services::depth_history_service::Interval;
 
 fn generate_error_text(field_name:&str) -> String{
