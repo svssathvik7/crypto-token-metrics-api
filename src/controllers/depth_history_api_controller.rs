@@ -1,6 +1,6 @@
 use chrono::Utc;
 use futures_util::StreamExt;
-use mongodb::bson::{doc, Document};
+use mongodb::bson::{doc, Bson, Document};
 
 use crate::{
     models::{api_request_param_model::QueryParams, custom_error_model::CustomError},
@@ -129,38 +129,34 @@ impl DataBase {
                 Err(e) => eprintln!("Error fetching document: {:?}", e),
             }
         }
-    
-        // Create meta object to hold last record's values
-        let mut meta = doc! {};
-        
-        if let Some(last_record) = query_response.last() {
-            if let Some(asset_depth) = last_record.get("assetDepth") {
-                meta.insert("endAssetDepth", asset_depth.clone());
-            }
-            if let Some(liquidity_units) = last_record.get("liquidityUnits") {
-                meta.insert("endLPUnits", liquidity_units.clone());
-            }
-            // Add additional fields as necessary, following the same pattern
-            if let Some(asset_price) = last_record.get("assetPrice") {
-                meta.insert("endAssetPrice", asset_price.clone());
-            }
-            if let Some(asset_price_usd) = last_record.get("assetPriceUSD") {
-                meta.insert("endAssetPriceUSD", asset_price_usd.clone());
-            }
-            if let Some(members_count) = last_record.get("membersCount") {
-                meta.insert("endMembersCount", members_count.clone());
-            }
-            if let Some(rune_depth) = last_record.get("runeDepth") {
-                meta.insert("endRuneDepth", rune_depth.clone());
-            }
-        }
-    
-        // Log the meta before returning
-        println!("Meta: {:?}", meta);
-        
-        Ok(doc![
-            "meta": meta,
+        let first = query_response.first().unwrap();
+        let last = query_response.last().unwrap();
+        let response = doc! {
+            "meta":{
+                "endAssetDepth": last.get("assetDepth"),
+                "endLPUnits": last.get("units"),
+                "endMemberCount": last.get("membersCount"),
+                "endRuneDepth": last.get("runeDepth"),
+                "endSynthUnits": last.get("synthUnits"),
+                "endTime": last.get("endTime"),
+                "luviIncrease": subtract_bson_values(last.get("luvi").unwrap(),first.get("luvi").unwrap()),
+                "priceShiftLoss": subtract_bson_values(first.get("assetPrice").unwrap(), last.get("assetPrice").unwrap()),
+                "startAssetDepth": first.get("assetDepth"),
+                "startLPUnits": first.get("units"),
+                "startMemberCount": first.get("membersCount"),
+                "startRuneDepth": first.get("runeDepth"),
+                "startSynthUnits": first.get("synthUnits"),
+                "startTime": first.get("startTime")
+            },
             "intervals": query_response
-        ]) // Return both query_response and meta
+        };
+        Ok(response)
     }    
+}
+pub fn subtract_bson_values(bson_value_a: &Bson, bson_value_b: &Bson) -> f64 {
+    // Attempt to convert both Bson values to f64
+    let value_a = bson_value_a.as_f64().unwrap_or(0.0);
+    let value_b = bson_value_b.as_f64().unwrap_or(0.0);
+    
+    value_a-value_b
 }
