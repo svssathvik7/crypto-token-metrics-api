@@ -46,8 +46,9 @@ impl DataBase{
                 doc! {"$gte": calc_start-(count*queried_interval_duration) as i64},
             );
         }
-        
+        // common query building code part has been moved to a helper function
         let (query_part, sort_filter, skip_size, limit) = build_query_sort_skip(to, sort_by, sort_order, page, limit, count).await;
+        // update the actual query with the query_part from builder
         query.extend(query_part.clone());
         println!("{}",query);
         let pipeline = vec![
@@ -88,6 +89,7 @@ impl DataBase{
             doc! { "$limit": limit as i64 },
         ];
 
+        
         let mut cursor = self.rune_pool_history.aggregate(pipeline).await?;
         let mut query_response = Vec::new();
         while let Some(result) = cursor.next().await {
