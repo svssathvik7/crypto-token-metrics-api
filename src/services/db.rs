@@ -1,20 +1,13 @@
-use crate::{
-    models::{
-        custom_error_model::CustomError,
-        depth_history_model::PoolDepthPriceHistory,
-        earning_history_model::{PoolEarningHistory, PoolEarningSummary},
-        rune_pool_model::RunePool,
-        swap_history_model::SwapHistory,
-    },
-    utils::constants::API_START_TIME,
+use crate::models::{custom_error_model::CustomError,
+    depth_history_model::PoolDepthPriceHistory,
+    earning_history_model::{PoolEarningHistory, PoolEarningSummary},
+    rune_pool_model::RunePool,
+    swap_history_model::SwapHistory,
 };
 use chrono::Utc;
 use dotenv::dotenv;
 use futures_util::StreamExt;
-use mongodb::{
-    bson::{doc, Bson, Document},
-    Client, Collection,
-};
+use mongodb::{bson::doc,Client, Collection,};
 use std::env;
 pub struct DataBase {
     pub depth_history: Collection<PoolDepthPriceHistory>,
@@ -25,6 +18,7 @@ pub struct DataBase {
 }
 
 impl DataBase {
+    // database initialization
     pub async fn init() -> Self {
         dotenv().ok();
 
@@ -37,6 +31,7 @@ impl DataBase {
         let swap_history_collection = db.collection("swap_history");
         let rune_pool_collection = db.collection("rune_pool_history");
 
+        // registered collections in the db
         DataBase {
             depth_history: depth_history_collection,
             earnings: earnings_collection,
@@ -45,7 +40,7 @@ impl DataBase {
             rune_pool_history: rune_pool_collection,
         }
     }
-    // helper functions
+    // helper functions to get the latest timestamp of record in the collection
     pub async fn get_max_end_time<T>(&self, collection: &Collection<T>) -> Result<i64, CustomError>
     where
         T: serde::de::DeserializeOwned + Send + Sync,

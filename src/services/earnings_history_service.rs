@@ -6,6 +6,7 @@ use crate::{models::earning_history_model::{PoolEarningHistory, PoolEarningSumma
 
 use super::db::DataBase;
 
+// earnings history is designed to fetch data of all pool types (around 8L+ records)
 fn generate_api_url(interval:&str,from:&str,count:&str) -> String{
     format!("https://midgard.ninerealms.com/v2/history/earnings?interval={}&from={}&count={}",interval,from,count)
 }
@@ -58,6 +59,7 @@ pub struct Interval {
     pub pools: Vec<Pool>,
 }
 
+// Imitate the actual midgard response style to parse data while fetching
 #[derive(Debug,Serialize,Deserialize)]
 pub struct ApiResponse{
     pub meta : Meta,
@@ -67,7 +69,7 @@ pub struct ApiResponse{
 impl PoolEarningHistory{
     pub async fn store_earning_history(db: &DataBase, data: ApiResponse) -> Result<(), Box<dyn Error>> {
         for interval in data.intervals {
-    
+            // iterate over each pool data in the interval of API Response
             let pool_earning_summary = PoolEarningSummary {
                 _id: ObjectId::new(),
                 avg_node_count: parse_field!(interval, avg_node_count, f64),
@@ -80,7 +82,7 @@ impl PoolEarningHistory{
                 start_time: parse_field!(interval, start_time, i64),
                 rune_price_usd: parse_field!(interval, rune_price_usd, f64),
             };
-    
+            // collect the earnings summary of interval result
             let earnings_summary_id = db.earnings_summary.insert_one(pool_earning_summary).await.unwrap().inserted_id;
             let mut check = true;
             for pool in interval.pools {

@@ -5,7 +5,7 @@ use crate::models::depth_history_model::PoolDepthPriceHistory;
 use reqwest::Error as reqwestError;
 use super::db::DataBase;
 
-// due to volume issues we are sticking to BTC BTC pool type
+// due to volume issues we are sticking to BTC BTC pool type in depths fetch
 fn generate_api_url(pool:&str,interval:&str,from:&str,count:&str) -> String{
     format!("https://midgard.ninerealms.com/v2/history/depths/{}?interval={}&from={}&count={}",pool,interval,from,count)
 }
@@ -50,7 +50,7 @@ pub struct Interval {
     pub units: String,
 }
 
-// imitating the actual midgard api response style
+// imitating the actual midgard api response style to parse the fetched data
 #[derive(Debug,Deserialize,Serialize)]
 pub struct ApiResponse{
     pub intervals : Vec<Interval>,
@@ -81,6 +81,7 @@ impl PoolDepthPriceHistory{
 
         println!("Raw response: {}", raw_body);
 
+        // parse the data asper the designed API Response struct
         let response = reqwest::get(&url).await?.json::<ApiResponse>().await?;
         // println!("{:?}",response);
         let end_time = response.meta.end_time.clone();
