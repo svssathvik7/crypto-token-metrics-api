@@ -2,13 +2,13 @@ use chrono::Utc;
 use futures_util::StreamExt;
 use mongodb::bson::{doc, Document};
 
-use crate::{models::{api_request_param_model::QueryParams, custom_error_model::CustomError}, services::db::DataBase, utils::db_helper_utils::{build_query_sort_skip, get_seconds_per_interval}};
+use crate::{models::{api_request_param_model::QueryParams, custom_error_model::CustomError}, services::{db::DataBase, rune_pool_service::{ApiResponse, Meta}}, utils::db_helper_utils::{build_query_sort_skip, get_seconds_per_interval}};
 
 impl DataBase{
     pub async fn get_rune_pool_history_api(
         &self,
         params: QueryParams,
-    ) -> Result<Vec<Document>, CustomError> {
+    ) -> Result<Document, CustomError> {
         let mut query = doc! {};
         let QueryParams {
             pool,
@@ -36,18 +36,10 @@ impl DataBase{
             let calc_start = if let Some(to) = to {
                 to as i64
             } else {
-                self.get_max_end_time(&self.rune_pool_history)
-                    .await
-                    .unwrap_or(Utc::now().timestamp())
+                Utc::now().timestamp() as i64
             };
             let count = count.unwrap_or(400) as i64;
             let queried_interval_duration = seconds_per_interval as i64;
-            println!(
-                "{} {} {}",
-                calc_start,
-                count * queried_interval_duration,
-                calc_start - (count * queried_interval_duration)
-            );
             query.insert(
                 "start_time",
                 doc! {"$gte": calc_start-(count*queried_interval_duration) as i64},
@@ -105,7 +97,20 @@ impl DataBase{
                 Err(e) => eprintln!("Error fetching document: {:?}", e),
             }
         }
+        let first = query_response.first().unwrap();
+        let last = query_response.last().unwrap();
+        let response = doc! {
+            "meta": {
+                "endCount" : last.get("count").unwrap().to_string(),
+                "endTime" : last.get("endTime").unwrap().to_string(),
+                "endUnits" : last.get("units").unwrap().to_string(),
+                "startCount" : first.get("count").unwrap().to_string(),
+                "startTime" : first.get("startTime").unwrap().to_string(),
+                "startUnits" : first.get("units").unwrap().to_string()
+            },
+            "intervals": query_response
+        };
         // println!("{:?}",query_response);
-        Ok(query_response)
+        Ok(response)
     }
 }

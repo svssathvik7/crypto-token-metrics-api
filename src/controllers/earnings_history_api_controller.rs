@@ -173,7 +173,6 @@ impl DataBase{
         };
     
         // Log the meta object before returning the response
-        println!("Meta: {:?}", result.get("meta"));
     
         Ok(result)
     }    
