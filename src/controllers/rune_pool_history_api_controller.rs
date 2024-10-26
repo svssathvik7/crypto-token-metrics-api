@@ -36,10 +36,18 @@ impl DataBase{
             let calc_start = if let Some(to) = to {
                 to as i64
             } else {
-                Utc::now().timestamp() as i64
+                self.get_max_end_time(&self.rune_pool_history)
+                    .await
+                    .unwrap_or(Utc::now().timestamp())
             };
             let count = count.unwrap_or(400) as i64;
             let queried_interval_duration = seconds_per_interval as i64;
+            println!(
+                "{} {} {}",
+                calc_start,
+                count * queried_interval_duration,
+                calc_start - (count * queried_interval_duration)
+            );
             query.insert(
                 "start_time",
                 doc! {"$gte": calc_start-(count*queried_interval_duration) as i64},

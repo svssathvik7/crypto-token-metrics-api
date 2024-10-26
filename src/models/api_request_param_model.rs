@@ -33,9 +33,10 @@ pub fn validate_query(query: &QueryParams) -> Result<(), HttpResponse> {
     }
 
     // Validate page
-    let page = query.page.unwrap_or(1).max(1);
-    if page < 1 {
-        return Err(HttpResponse::BadRequest().json("page must be a positive integer."));
+    if let Some(page) = query.page {
+        if page < 1{
+            return Err(HttpResponse::BadRequest().json("page must be a positive integer."));
+        }
     }
 
     // Validate interval
