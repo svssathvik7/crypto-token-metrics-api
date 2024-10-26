@@ -13,7 +13,7 @@ impl DataBase {
     pub async fn get_depth_price_history_api(
         &self,
         params: QueryParams,
-    ) -> Result<Vec<Document>, CustomError> {
+    ) -> Result<Document, CustomError> {
         let mut query = doc! {};
         let QueryParams {
             pool,
@@ -26,12 +26,12 @@ impl DataBase {
             sort_order,
             limit,
         } = params;
-
+    
         let mut seconds_per_interval =
             get_seconds_per_interval(interval.as_ref().unwrap_or(&"hour".to_string()).as_str());
-
+    
         if let Some(pool) = pool {
-            // for now due to volume and computation constraints our depth history is confined to only BTC.BTC pool
+            // Check pool constraint
             if pool != "BTC.BTC" {
                 return Err(CustomError::InvalidInput(
                     "Depth and price history for only BTC.BTC available".to_string(),
@@ -39,7 +39,7 @@ impl DataBase {
             }
             query.insert("pool", pool);
         }
-
+    
         if let Some(from) = from {
             query.insert("start_time", doc! { "$gte": from as i64 });
         } else {
@@ -52,23 +52,16 @@ impl DataBase {
             };
             let count = count.unwrap_or(400) as i64;
             let queried_interval_duration = seconds_per_interval as i64;
-            println!(
-                "{} {} {}",
-                calc_start,
-                count * queried_interval_duration,
-                calc_start - (count * queried_interval_duration)
-            );
             query.insert(
                 "start_time",
-                doc! {"$gte": calc_start-(count*queried_interval_duration) as i64},
+                doc! {"$gte": calc_start - (count * queried_interval_duration) as i64},
             );
         }
         let (query, sort_filter, skip_size, limit) =
             build_query_sort_skip(to, sort_by, sort_order, page, limit, count).await;
-        println!("{}", query);
-
+    
         let pipeline = vec![
-            doc! { "$match": query }, // Match stage
+            doc! { "$match": query },
             doc! {
                 "$group": {
                     "_id": {
@@ -123,9 +116,10 @@ impl DataBase {
             doc! { "$skip": skip_size as i64 },
             doc! { "$limit": limit as i64 },
         ];
-
+    
         let mut cursor = self.depth_history.aggregate(pipeline).await?;
         let mut query_response = Vec::new();
+    
         while let Some(result) = cursor.next().await {
             match result {
                 Ok(mut record) => {
@@ -135,7 +129,38 @@ impl DataBase {
                 Err(e) => eprintln!("Error fetching document: {:?}", e),
             }
         }
-        // println!("{:?}",query_response);
-        Ok(query_response)
-    }
+    
+        // Create meta object to hold last record's values
+        let mut meta = doc! {};
+        
+        if let Some(last_record) = query_response.last() {
+            if let Some(asset_depth) = last_record.get("assetDepth") {
+                meta.insert("endAssetDepth", asset_depth.clone());
+            }
+            if let Some(liquidity_units) = last_record.get("liquidityUnits") {
+                meta.insert("endLPUnits", liquidity_units.clone());
+            }
+            // Add additional fields as necessary, following the same pattern
+            if let Some(asset_price) = last_record.get("assetPrice") {
+                meta.insert("endAssetPrice", asset_price.clone());
+            }
+            if let Some(asset_price_usd) = last_record.get("assetPriceUSD") {
+                meta.insert("endAssetPriceUSD", asset_price_usd.clone());
+            }
+            if let Some(members_count) = last_record.get("membersCount") {
+                meta.insert("endMembersCount", members_count.clone());
+            }
+            if let Some(rune_depth) = last_record.get("runeDepth") {
+                meta.insert("endRuneDepth", rune_depth.clone());
+            }
+        }
+    
+        // Log the meta before returning
+        println!("Meta: {:?}", meta);
+        
+        Ok(doc![
+            "meta": meta,
+            "intervals": query_response
+        ]) // Return both query_response and meta
+    }    
 }
