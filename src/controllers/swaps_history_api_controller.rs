@@ -2,14 +2,14 @@ use chrono::Utc;
 use futures_util::StreamExt;
 use mongodb::bson::{doc, Document};
 
-use crate::{models::{api_request_param_model::QueryParams, custom_error_model::CustomError}, services::db::DataBase, utils::db_helper_utils::{build_query_sort_skip, get_seconds_per_interval}};
+use crate::{models::{api_request_param_model::QueryParams, custom_error_model::CustomError}, services::db::DataBase, utils::{db_helper_utils::{build_query_sort_skip, get_seconds_per_interval}, parser_utils::subtract_bson_values}};
 
 // /swaps
 impl DataBase{
     pub async fn get_swaps_history_api(
         &self,
         params: QueryParams,
-    ) -> Result<Vec<Document>, CustomError> {
+    ) -> Result<Document, CustomError> {
         let mut query = doc! {};
         let QueryParams {
             pool,
@@ -182,7 +182,51 @@ impl DataBase{
                 Err(e) => eprintln!("Error fetching document: {:?}", e),
             }
         }
+        let first = query_response.first().unwrap();
+        let last = query_response.last().unwrap();
+        let response = doc! {
+            "meta": {
+                "endTime": last.get("endTime"),
+                "fromTradeAverageSlip": last.get("fromTradeAverageSlip"),
+                "fromTradeCount": last.get("fromTradeCount"),
+                "fromTradeFees": last.get("fromTradeFees"),
+                "fromTradeVolume": last.get("fromTradeVolume"),
+                "fromTradeVolumeUSD": last.get("fromTradeVolumeUSD"),
+                "runePriceUSD": last.get("runePriceUSD"),
+                "startTime": first.get("startTime"),
+                "synthMintAverageSlip": last.get("synthRedeemAverageSlip"),
+                "synthMintCount": last.get("synthMintCount"),
+                "synthMintFees": last.get("synthMintFees"),
+                "synthMintVolume": last.get("synthMintVolume"),
+                "synthMintVolumeUSD": last.get("synthMintVolumeUSD"),
+                "synthRedeemAverageSlip": last.get("synthRedeemAverageSlip"),
+                "synthRedeemCount": last.get("synthRedeemCount"),
+                "synthRedeemFees": last.get("synthRedeemFees"),
+                "synthRedeemVolume": last.get("synthRedeemVolume"),
+                "synthRedeemVolumeUSD": last.get("synthRedeemVolumeUSD"),
+                "toAssetAverageSlip": last.get("toAssetAverageSlip"),
+                "toAssetCount": last.get("toAssetCount"),
+                "toAssetFees": last.get("toAssetFees"),
+                "toAssetVolume": last.get("toAssetVolume"),
+                "toAssetVolumeUSD": last.get("toAssetVolumeUSD"),
+                "toRuneAverageSlip": last.get("toRuneAverageSlip"),
+                "toRuneCount": last.get("toRuneCount"),
+                "toRuneFees": last.get("toRuneFees"),
+                "toRuneVolume": last.get("toRuneVolume"),
+                "toRuneVolumeUSD": last.get("toRuneVolumeUSD"),
+                "toTradeAverageSlip": last.get("toTradeAverageSlip"),
+                "toTradeCount": last.get("toTradeCount"),
+                "toTradeFees": last.get("toTradeFees"),
+                "toTradeVolume": last.get("toTradeVolume"),
+                "toTradeVolumeUSD": last.get("toTradeVolumeUSD"),
+                "totalCount": last.get("totalCount"),
+                "totalFees": last.get("totalFees"),
+                "totalVolume": last.get("totalVolume"),
+                "totalVolumeUSD": last.get("totalVolumeUSD")
+            },
+            "intervals": query_response
+        };
         // println!("{:?}",query_response);
-        Ok(query_response)
+        Ok(response)
     }
 }

@@ -5,7 +5,7 @@ use mongodb::bson::{doc, Bson, Document};
 use crate::{
     models::{api_request_param_model::QueryParams, custom_error_model::CustomError},
     services::db::DataBase,
-    utils::db_helper_utils::{build_query_sort_skip, get_seconds_per_interval},
+    utils::{db_helper_utils::{build_query_sort_skip, get_seconds_per_interval}, parser_utils::subtract_bson_values},
 };
 
 impl DataBase {
@@ -152,11 +152,4 @@ impl DataBase {
         };
         Ok(response)
     }    
-}
-pub fn subtract_bson_values(bson_value_a: &Bson, bson_value_b: &Bson) -> f64 {
-    // Attempt to convert both Bson values to f64
-    let value_a = bson_value_a.as_f64().unwrap_or(0.0);
-    let value_b = bson_value_b.as_f64().unwrap_or(0.0);
-    
-    value_a-value_b
 }
