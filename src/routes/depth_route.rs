@@ -6,7 +6,7 @@ use crate::{models::{api_request_param_model::{validate_query, QueryParams}, dep
     get,
     path = "/depths",
     params(
-        ("from" = Option<u64>, Query, description = "Start time Unix timestamp, if not specified, from = (current_time/to_time - interval_dur*count"),
+        ("from" = Option<u64>, Query, description = "Start time Unix timestamp, if not specified, from = (current_time/to_time - interval_dur*count)"),
         ("to" = Option<u64>, Query, description = "End time Unix timestamp"),
         ("pool" = Option<String>, Query, description = "Pool identifier - only BTC.BTC for now"),
         ("page" = Option<u64>, Query, description = "Page number (minimum: 1)"),
@@ -27,7 +27,7 @@ use crate::{models::{api_request_param_model::{validate_query, QueryParams}, dep
 pub async fn get_depth_price_history(db:web::Data<DataBase>,params:web::Query<QueryParams>) -> HttpResponse{
     if let Err(validation_err) = validate_query(&params) {
         println!("{:?}",&validation_err);
-        return validation_err;
+        return HttpResponse::BadRequest().json(validation_err);
     }
     match db.get_depth_price_history_api(params.into_inner()).await {
         Ok(result) => HttpResponse::Ok().json(result),

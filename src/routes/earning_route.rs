@@ -27,7 +27,7 @@ use crate::{models::{api_request_param_model::{validate_query, QueryParams}, ear
 #[actix_web::get("")]
 pub async fn get_earnings_history(db:web::Data<DataBase>,params:web::Query<QueryParams>) -> HttpResponse{
     if let Err(validation_err) = validate_query(&params) {
-        return validation_err;
+        return HttpResponse::BadRequest().json(validation_err);
     }
     match db.get_pool_earnings_history_api(params.into_inner()).await {
         Ok(result) => HttpResponse::Ok().json(result),
