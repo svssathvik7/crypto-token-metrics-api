@@ -4,6 +4,7 @@ use serde::{Deserialize, Serialize};
 pub enum CustomError {
     InvalidInput(String),
     DatabaseError(String),
+    StandardError(String)
 }
 impl From<mongoError> for CustomError {
     fn from(err: mongoError) -> Self {

@@ -48,7 +48,7 @@ async fn fetch_all_rune_pools_to_db(db:web::Data<DataBase>) -> impl Responder{
         let end_time = match RunePool::fetch_rune_pool(&db, "hour", "400", &start.to_string()).await {
             Ok(response) => response,
             Err(e) => {
-                println!("Failed to fetch and update db with rune pool history! {:?}\n",e.to_string());
+                println!("Failed to fetch and update db with rune pool history! {:?}\n",e);
                 current_time_stamp+10
             }
         };

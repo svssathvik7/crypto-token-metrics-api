@@ -1,6 +1,6 @@
 use serde::{Deserialize, Serialize};
 
-use crate::models::depth_history_model::PoolDepthPriceHistory;
+use crate::models::{custom_error_model::CustomError, depth_history_model::PoolDepthPriceHistory};
 use super::db::DataBase;
 
 // due to volume issues we are sticking to BTC BTC pool type in depths fetch
@@ -56,7 +56,7 @@ pub struct ApiResponse{
 }
 
 impl PoolDepthPriceHistory{
-    pub async fn store_price_history(db: &DataBase, data: ApiResponse) -> Result<(),String>{
+    pub async fn store_price_history(db: &DataBase, data: ApiResponse) -> Result<(),CustomError>{
         for interval in data.intervals {
             match PoolDepthPriceHistory::try_from(interval) {
                 Ok(pool_history_interval) => {
@@ -65,23 +65,23 @@ impl PoolDepthPriceHistory{
                     }
                 },
                 Err(e) => {
-                    return Err(format!("Error writing pool history to db: {:?}", e));
+                    return Err(CustomError::DatabaseError(format!("Error writing pool history to db: {:?}", e)));
                 }
             }
         }
         Ok(())
     }
-    pub async fn fetch_price_history(db:&DataBase,pool:&str,interval:&str,count:&str,from:&str) -> Result<i64,String>{
+    pub async fn fetch_price_history(db:&DataBase,pool:&str,interval:&str,count:&str,from:&str) -> Result<i64,CustomError>{
         let url = generate_api_url(&pool,&interval,&from,&count);
         println!("{}",url);
         let api_response = match reqwest::get(&url).await {
             Ok(res) => res,
-            Err(e) => return Err(format!("Failed to fetch data: {}", e))
+            Err(e) => return Err(CustomError::DatabaseError(format!("Failed to fetch data: {}", e)))
         };
     
         let raw_body = match api_response.text().await {
             Ok(res) => res,
-            Err(e) => return Err(format!("Failed to read response text: {}", e)),
+            Err(e) => return Err(CustomError::StandardError(format!("Failed to read response text: {}", e))),
         };
     
         println!("Raw response: {}", raw_body);
@@ -90,21 +90,21 @@ impl PoolDepthPriceHistory{
             Ok(res) => {
                 match res.json::<ApiResponse>().await {
                     Ok(res) => res,
-                    Err(e) => return Err(format!("Failed to parse JSON response: {}", e)),
+                    Err(e) => return Err(CustomError::StandardError(format!("Parsing error - {}", e.to_string()))),
                 }
             },
-            Err(e) => return Err(format!("{}", e.to_string())),
+            Err(e) => return Err(CustomError::StandardError(format!("{}", e.to_string()))),
         };        
     
         // Extract end_time and handle any potential errors
         let end_time = match response.meta.end_time.parse::<i64>() {
             Ok(time) => time,
-            Err(e) => return Err(format!("Failed to parse end time: {}", e))
+            Err(e) => return Err(CustomError::StandardError(format!("Failed to parse end time: {}", e)))
         };
         // println!("{:?}",response);
         match self::PoolDepthPriceHistory::store_price_history(db,response).await{
             Ok(_res) => (),
-            Err(e) => return Err(format!("{}",e))
+            Err(e) => return Err(e)
         };
         // println!("{}","in");
         Ok(end_time)

@@ -1,5 +1,5 @@
 use serde::{Deserialize, Serialize};
-use crate::models::swap_history_model::SwapHistory;
+use crate::models::{custom_error_model::CustomError, swap_history_model::SwapHistory};
 use super::db::DataBase;
 
 fn generate_api_url(pool:&str,interval:&str,from:&str,count:&str) -> String{
@@ -115,27 +115,27 @@ pub struct ApiResponse{
 }
 
 impl SwapHistory{
-    pub async fn store_swap_history(db:&DataBase,pool:&str,data:ApiResponse) -> Result<(),String>{
+    pub async fn store_swap_history(db:&DataBase,pool:&str,data:ApiResponse) -> Result<(),CustomError>{
         for interval in data.intervals{
             let pool_swap_history = SwapHistory::to_swap_history(interval, pool).unwrap();
             match db.swap_history.insert_one(pool_swap_history).await {
                 Ok(_record) => println!("Inserted pool swap doc {}",pool),
-                Err(e) => return Err(format!("Error inserting swap doc to db {:?}",e))
+                Err(e) => return Err(CustomError::DatabaseError(format!("Error inserting swap doc to db {:?}",e)))
             }
         }
         Ok(())
     }
-    pub async fn fetch_swap_history(db:&DataBase,pool:&str,interval:&str,count:&str,from:&str) -> Result<i64,String>{
+    pub async fn fetch_swap_history(db:&DataBase,pool:&str,interval:&str,count:&str,from:&str) -> Result<i64,CustomError>{
         let url = generate_api_url(&pool,&interval, &from, &count);
         println!("url - {}",url);
         let api_response = match reqwest::get(&url).await {
             Ok(res) => res,
-            Err(e) => return Err(format!("Failed to fetch data: {}", e))
+            Err(e) => return Err(CustomError::InvalidInput(format!("Failed to fetch data: {}", e)))
         };
     
         let raw_body = match api_response.text().await {
             Ok(res) => res,
-            Err(e) => return Err(format!("Failed to read response text: {}", e)),
+            Err(e) => return Err(CustomError::InvalidInput(format!("Failed to read response text: {}", e))),
         };
     
         println!("Raw response: {}", raw_body);
@@ -144,20 +144,20 @@ impl SwapHistory{
             Ok(res) => {
                 match res.json::<ApiResponse>().await {
                     Ok(res) => res,
-                    Err(e) => return Err(format!("Failed to parse JSON response: {}", e)),
+                    Err(e) => return Err(CustomError::DatabaseError(format!("Failed to parse JSON response: {}", e))),
                 }
             },
-            Err(e) => return Err(format!("{}", e.to_string())),
+            Err(e) => return Err(CustomError::InvalidInput(format!("Failed getting data at swap history {}", e.to_string()))),
         };        
     
         // Extract end_time and handle any potential errors
         let end_time = match response.meta.end_time.parse::<i64>() {
             Ok(time) => time,
-            Err(e) => return Err(format!("Failed to parse end time: {}", e))
+            Err(e) => return Err(CustomError::InvalidInput(format!("Failed to parse end time: {}", e)))
         };
         match self::SwapHistory::store_swap_history(db, pool, response).await{
             Ok(_res) => (),
-            Err(e) => return Err(format!("{}",e))
+            Err(e) => return Err(e)
         };
         Ok(end_time)
     }

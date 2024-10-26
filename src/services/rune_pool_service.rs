@@ -1,5 +1,5 @@
 use serde::{Deserialize, Serialize};
-use crate::models::rune_pool_model::RunePool;
+use crate::models::{custom_error_model::CustomError, rune_pool_model::RunePool};
 use super::db::DataBase;
 
 fn generate_api_url(interval:&str,from:&str,count:&str) -> String{
@@ -33,7 +33,7 @@ pub struct ApiResponse{
 }
 
 impl RunePool{
-    pub async fn store_rune_pool(db:&DataBase,data:ApiResponse) -> Result<(),String>{
+    pub async fn store_rune_pool(db:&DataBase,data:ApiResponse) -> Result<(),CustomError>{
         for interval in data.intervals{
             match RunePool::try_from(interval) {
                 Ok(rune_pool_object) => {
@@ -43,23 +43,23 @@ impl RunePool{
                     }
                 },
                 Err(e) => {
-                    return Err(format!("Error parsing interval to rune pool object! {}",e));
+                    return Err(CustomError::DatabaseError(format!("Error parsing interval to rune pool object! {}",e)));
                 }
             }
         }
         Ok(())
     }
-    pub async fn fetch_rune_pool(db:&DataBase,interval:&str,count:&str,from:&str) -> Result<i64, String>{
+    pub async fn fetch_rune_pool(db:&DataBase,interval:&str,count:&str,from:&str) -> Result<i64, CustomError>{
         let url = generate_api_url(interval, from, count);
         println!("url - {}",&url);
         let api_response = match reqwest::get(&url).await {
             Ok(res) => res,
-            Err(e) => return Err(format!("Failed to fetch data: {}", e))
+            Err(e) => return Err(CustomError::StandardError(format!("Failed to fetch data: {}", e)))
         };
     
         let raw_body = match api_response.text().await {
             Ok(res) => res,
-            Err(e) => return Err(format!("Failed to read response text: {}", e)),
+            Err(e) => return Err(CustomError::InvalidInput(format!("Failed to read response text: {}", e))),
         };
     
         println!("Raw response: {}", raw_body);
@@ -68,20 +68,20 @@ impl RunePool{
             Ok(res) => {
                 match res.json::<ApiResponse>().await {
                     Ok(res) => res,
-                    Err(e) => return Err(format!("Failed to parse JSON response: {}", e)),
+                    Err(e) => return Err(CustomError::InvalidInput(format!("Failed to parse JSON response: {}", e))),
                 }
             },
-            Err(e) => return Err(format!("{}", e.to_string())),
+            Err(e) => return Err(CustomError::StandardError(format!("{}", e.to_string()))),
         };        
     
         // Extract end_time and handle any potential errors
         let end_time = match response.meta.end_time.parse::<i64>() {
             Ok(time) => time,
-            Err(e) => return Err(format!("Failed to parse end time: {}", e))
+            Err(e) => return Err(CustomError::StandardError(format!("Failed to parse end time: {}", e)))
         };
         match self::RunePool::store_rune_pool(db, response).await{
             Ok(_res) => (),
-            Err(e) => return Err(format!("{}",e))
+            Err(e) => return Err(e)
         };
         Ok(end_time)
     }
