@@ -2,7 +2,7 @@ use chrono::Utc;
 use futures_util::StreamExt;
 use mongodb::bson::{doc, Document};
 
-use crate::{models::{api_request_param_model::QueryParams, custom_error_model::CustomError}, services::db::DataBase, utils::{db_helper_utils::{build_query_sort_skip, get_seconds_per_interval}, parser_utils::subtract_bson_values}};
+use crate::{models::{api_request_param_model::QueryParams, custom_error_model::CustomError}, services::db::DataBase, utils::db_helper_utils::{build_query_sort_skip, get_seconds_per_interval}};
 
 // /swaps
 impl DataBase{
@@ -60,8 +60,9 @@ impl DataBase{
                 doc! {"$gte": calc_start-(count*queried_interval_duration) as i64},
             );
         }
-    
+        // common query building code part has been moved to a helper function
         let (query_part, sort_filter, skip_size, limit) = build_query_sort_skip(to, sort_by, sort_order, page, limit, count).await;
+        // update the actual query with the query_part from builder
         query.extend(query_part.clone());
         let pipeline = vec![
             doc! { "$match": query }, // Match stage
@@ -182,6 +183,7 @@ impl DataBase{
                 Err(e) => eprintln!("Error fetching document: {:?}", e),
             }
         }
+        // no graceful error handling since any unwrap_or would result in wrong meta results
         let first = query_response.first().unwrap();
         let last = query_response.last().unwrap();
         let response = doc! {
