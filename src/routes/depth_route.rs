@@ -6,7 +6,7 @@ use crate::{models::{api_request_param_model::{validate_query, QueryParams}, dep
     get,
     path = "/depths",
     params(
-        ("from" = Option<u64>, Query, description = "Start time Unix timestamp, if not specified, from = `(current_time(or)to_time - interval_dur*count)`"),
+        ("from" = Option<u64>, Query, description = "Start time Unix timestamp, if not specified, from = `(current_time (or) to_time - interval_dur*count)`"),
         ("to" = Option<u64>, Query, description = "End time Unix timestamp"),
         ("pool" = Option<String>, Query, description = "Pool identifier - only `BTC.BTC` for now"),
         ("page" = Option<u64>, Query, description = "Page number (minimum: `1`)"),

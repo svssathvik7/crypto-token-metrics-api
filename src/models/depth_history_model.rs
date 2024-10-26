@@ -6,8 +6,9 @@ use utoipa::ToSchema;
 use crate::{parse_field, services::depth_history_service::Interval};
 
 #[derive(Deserialize,Serialize,Debug,ToSchema)]
+#[schema(rename_all="camelCase")]
 pub struct PoolDepthPriceHistory{
-    #[schema(value_type = String, example = "60d5ec49a1c4b5048c0e5c70")]
+    #[schema(value_type=String,rename="_id (not exposed in response)")]
     pub _id : ObjectId,
     #[schema(example= "BTC.BTC")]
     pub pool : String,
@@ -15,7 +16,7 @@ pub struct PoolDepthPriceHistory{
     pub asset_depth : f64,
     #[schema(example = 70.10)]
     pub asset_price : f64,
-    #[schema(example = 8000.02)]
+    #[schema(example = 8000.02,rename="assetPriceUSD")]
     pub asset_price_usd : f64,
     #[schema(example = 1653373410)]
     pub end_time : i64,
