@@ -169,7 +169,7 @@ impl DataBase{
             }},
             doc! { "$sort": sort_filter },
             doc! { "$skip": skip_size as i64 },
-            doc! { "$limit": limit as i64 },
+            doc! { "$limit": count.unwrap_or(400) as i64 },
         ];
     
         let mut cursor = self.swap_history.aggregate(pipeline).await?;
