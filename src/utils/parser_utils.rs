@@ -25,6 +25,12 @@ pub fn subtract_bson_values(bson_value_a: &Bson, bson_value_b: &Bson) -> f64 {
 #[macro_export]
 macro_rules! parse_field {
     ($interval:expr, $field:ident, $type:ty) => {
-        crate::utils::parser_utils::parse_to_type::<$type>(&$interval.$field, stringify!($field))?
+        match crate::utils::parser_utils::parse_to_type::<$type>(&$interval.$field, stringify!($field)){
+            Ok(res) => res,
+            Err(e) => {
+                eprintln!("{}",e);
+                0 as $type
+            }
+        }
     };
 }

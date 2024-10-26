@@ -1,5 +1,3 @@
-use std::error::Error;
-use reqwest::Error as reqwestError;
 use serde::{Deserialize, Serialize};
 use mongodb::bson::oid::ObjectId;
 use crate::{models::earning_history_model::{PoolEarningHistory, PoolEarningSummary}, parse_field};
@@ -67,7 +65,7 @@ pub struct ApiResponse{
 }
 
 impl PoolEarningHistory{
-    pub async fn store_earning_history(db: &DataBase, data: ApiResponse) -> Result<(), Box<dyn Error>> {
+    pub async fn store_earning_history(db: &DataBase, data: ApiResponse) -> Result<(), String> {
         for interval in data.intervals {
             // iterate over each pool data in the interval of API Response
             let pool_earning_summary = PoolEarningSummary {
@@ -108,25 +106,57 @@ impl PoolEarningHistory{
                     Ok(_rec) => {
                         println!("Successfully inserted earnings history to db");
                     }
-                    Err(_e) => eprint!("Failed inserting earnings history"),
+                    Err(e) => return Err(format!("Failed inserting earnings history {}",e)),
                 }
             }
         }
         Ok(())
     }    
-    pub async fn fetch_earning_history(db:&DataBase,interval:&str,count:&str,from:&str) -> Result<i64,reqwestError>{
+    pub async fn fetch_earning_history(
+        db: &DataBase,
+        interval: &str,
+        count: &str,
+        from: &str,
+    ) -> Result<i64, String> {
+        // Generate the API URL
         let url = generate_api_url(interval, from, count);
-        print!("url - {}",url);
-        let api_response = reqwest::get(&url).await?;
-        let raw_body = api_response.text().await?;
-
+        print!("url - {}", url);
+        
+        let api_response = match reqwest::get(&url).await {
+            Ok(res) => res,
+            Err(e) => return Err(format!("Failed to fetch data: {}", e))
+        };
+    
+        let raw_body = match api_response.text().await {
+            Ok(res) => res,
+            Err(e) => return Err(format!("Failed to read response text: {}", e)),
+        };
+    
         println!("Raw response: {}", raw_body);
-
-        let response = reqwest::get(&url).await?.json::<ApiResponse>().await?;
-        // println!("{:?}",response);
-        let end_time = response.meta.end_time.clone();
-        let end_time = end_time.parse::<i64>().unwrap();
-        self::PoolEarningHistory::store_earning_history(db, response).await;
-        Ok(end_time)
+    
+        let response = match reqwest::get(&url).await {
+            Ok(res) => {
+                match res.json::<ApiResponse>().await {
+                    Ok(res) => res,
+                    Err(e) => return Err(format!("Failed to parse JSON response: {}", e)),
+                }
+            },
+            Err(e) => return Err(format!("{}", e.to_string())),
+        };        
+    
+        // Extract end_time and handle any potential errors
+        let end_time = match response.meta.end_time.parse::<i64>() {
+            Ok(time) => time,
+            Err(e) => return Err(format!("Failed to parse end time: {}", e)), // Custom error message
+        };
+    
+        // Store earning history and handle any potential errors
+        match self::PoolEarningHistory::store_earning_history(db, response).await{
+            Ok(_res) => (),
+            Err(e) => return Err(format!("{}",e))
+        };
+    
+        Ok(end_time) // Return the end_time if everything is successful
     }
+    
 }
