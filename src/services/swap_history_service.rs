@@ -1,7 +1,5 @@
 use serde::{Deserialize, Serialize};
-
 use crate::models::swap_history_model::SwapHistory;
-use reqwest::Error as reqwestError;
 use super::db::DataBase;
 
 fn generate_api_url(pool:&str,interval:&str,from:&str,count:&str) -> String{
@@ -117,28 +115,50 @@ pub struct ApiResponse{
 }
 
 impl SwapHistory{
-    pub async fn store_swap_history(db:&DataBase,pool:&str,data:ApiResponse){
+    pub async fn store_swap_history(db:&DataBase,pool:&str,data:ApiResponse) -> Result<(),String>{
         for interval in data.intervals{
             let pool_swap_history = SwapHistory::to_swap_history(interval, pool).unwrap();
             match db.swap_history.insert_one(pool_swap_history).await {
                 Ok(_record) => println!("Inserted pool swap doc {}",pool),
-                Err(e) => eprint!("Error inserting swap doc to db {:?}",e)
+                Err(e) => return Err(format!("Error inserting swap doc to db {:?}",e))
             }
         }
+        Ok(())
     }
-    pub async fn fetch_swap_history(db:&DataBase,pool:&str,interval:&str,count:&str,from:&str) -> Result<i64,reqwestError>{
+    pub async fn fetch_swap_history(db:&DataBase,pool:&str,interval:&str,count:&str,from:&str) -> Result<i64,String>{
         let url = generate_api_url(&pool,&interval, &from, &count);
         println!("url - {}",url);
-        let api_response = reqwest::get(&url).await?;
-        let raw_body = api_response.text().await?;
-
+        let api_response = match reqwest::get(&url).await {
+            Ok(res) => res,
+            Err(e) => return Err(format!("Failed to fetch data: {}", e))
+        };
+    
+        let raw_body = match api_response.text().await {
+            Ok(res) => res,
+            Err(e) => return Err(format!("Failed to read response text: {}", e)),
+        };
+    
         println!("Raw response: {}", raw_body);
-
-        let response = reqwest::get(&url).await?.json::<ApiResponse>().await?;
-        
-        let end_time = response.meta.end_time.clone();
-        let end_time = end_time.parse::<i64>().unwrap();
-        self::SwapHistory::store_swap_history(db, pool, response).await;
+    
+        let response = match reqwest::get(&url).await {
+            Ok(res) => {
+                match res.json::<ApiResponse>().await {
+                    Ok(res) => res,
+                    Err(e) => return Err(format!("Failed to parse JSON response: {}", e)),
+                }
+            },
+            Err(e) => return Err(format!("{}", e.to_string())),
+        };        
+    
+        // Extract end_time and handle any potential errors
+        let end_time = match response.meta.end_time.parse::<i64>() {
+            Ok(time) => time,
+            Err(e) => return Err(format!("Failed to parse end time: {}", e))
+        };
+        match self::SwapHistory::store_swap_history(db, pool, response).await{
+            Ok(_res) => (),
+            Err(e) => return Err(format!("{}",e))
+        };
         Ok(end_time)
     }
 }
