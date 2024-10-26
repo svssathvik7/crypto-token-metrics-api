@@ -1,11 +1,12 @@
 use mongodb::bson::oid::ObjectId;
 use serde::{Deserialize, Serialize};
-use utoipa::ToSchema;
+use utoipa::{openapi::schema, ToSchema};
 
 
 #[derive(Debug,Serialize,Deserialize,ToSchema)]
+#[schema(rename_all="camelCase")]
 pub struct PoolEarningSummary{
-    #[schema(value_type = String, example = "60d5ec49a1c4b5048c0e5c70")]
+    #[schema(value_type = String, example = "60d5ec49a1c4b5048c0e5c70",rename="._id not exposed in the response")]
     pub _id : ObjectId,
     #[schema(example=36.58)]
     pub avg_node_count : f64,
@@ -23,13 +24,14 @@ pub struct PoolEarningSummary{
     pub liquidity_fees : u64,
     #[schema(example=1647914400)]
     pub start_time : i64,
-    #[schema(example=8.508409670179631)]
+    #[schema(example=8.508409670179631,rename="runePriceUSD")]
     pub rune_price_usd : f64,
 }  
 
 #[derive(Debug,Deserialize,Serialize,ToSchema)]
+#[schema(rename_all="camelCase")]
 pub struct PoolEarningHistory{
-    #[schema(value_type = String, example = "60d5ec49a1c4b5048c0e5c70")]
+    #[schema(value_type = String, example = "60d5ec49a1c4b5048c0e5c70",rename="._id not exposed in the response")]
     pub _id : ObjectId,
     #[schema(example="TERRA.LUNA")]
     pub pool : String,

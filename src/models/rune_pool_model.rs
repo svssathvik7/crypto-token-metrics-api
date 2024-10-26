@@ -1,6 +1,6 @@
 use mongodb::bson::oid::ObjectId;
 use serde::{Deserialize, Serialize};
-use utoipa::{openapi::schema, ToSchema};
+use utoipa::ToSchema;
 
 use crate::{parse_field, services::rune_pool_service::Interval};
 use std::error::Error as stdError;
