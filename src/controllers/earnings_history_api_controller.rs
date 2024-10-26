@@ -2,9 +2,13 @@ use chrono::Utc;
 use futures_util::StreamExt;
 use mongodb::bson::{doc, Document};
 
-use crate::{models::{api_request_param_model::QueryParams, custom_error_model::CustomError}, services::db::DataBase, utils::db_helper_utils::{build_query_sort_skip, get_seconds_per_interval}};
+use crate::{
+    models::{api_request_param_model::QueryParams, custom_error_model::CustomError},
+    services::db::DataBase,
+    utils::db_helper_utils::{build_query_sort_skip, get_seconds_per_interval},
+};
 
-impl DataBase{
+impl DataBase {
     pub async fn get_pool_earnings_history_api(
         &self,
         params: QueryParams,
@@ -21,9 +25,10 @@ impl DataBase{
             sort_order,
             limit,
         } = params;
-    
-        let seconds_per_interval = get_seconds_per_interval(interval.as_ref().unwrap_or(&"hour".to_string()).as_str());
-    
+
+        let seconds_per_interval =
+            get_seconds_per_interval(interval.as_ref().unwrap_or(&"hour".to_string()).as_str());
+
         if let Some(pool) = pool {
             query.insert("pool", pool);
         }
@@ -31,8 +36,7 @@ impl DataBase{
         // as per midgard api if from is not specified the from has to be fixed back relative to either current timestamp or "to" timestamp (if given) or w.r.t the latest record in the collection
         if let Some(from) = from {
             query.insert("start_time", doc! { "$gte": from as i64 });
-        }
-        else {
+        } else {
             let calc_start = if let Some(to) = to {
                 to as i64
             } else {
@@ -53,14 +57,15 @@ impl DataBase{
                 doc! {"$gte": calc_start - (count * queried_interval_duration)},
             );
         }
-    
+
         // common query building code part has been moved to a helper function
-        let (query_part, sort_filter, skip_size, limit) = build_query_sort_skip(to, sort_by, sort_order, page, limit, count).await;
+        let (query_part, sort_filter, skip_size, limit) =
+            build_query_sort_skip(to, sort_by, sort_order, page, limit, count).await;
 
         // update the actual query with the query_part from builder
         query.extend(query_part.clone());
         println!("{}", query);
-        
+
         let pipeline = vec![
             doc! { "$match": query },
             doc! {
@@ -74,15 +79,15 @@ impl DataBase{
                                     seconds_per_interval
                                 ]}
                             ]
-                        }
+                        },
+                        "pool": "$pool"
                     },
-                    "pool": { "$last": "$pool" },
                     "assetLiquidityFees": { "$last": "$asset_liquidity_fees" },
                     "runeLiquidityFees": { "$last": "$rune_liquidity_fees" },
                     "totalLiquidityFeesRune": { "$last": "$total_liquidity_fees_rune" },
-                    "saverEarning": {"$last" : "$saver_earning"},
-                    "earning": {"$last" : "$earning"},
-                    "rewards": {"$last" : "$rewards"},
+                    "saverEarning": { "$last": "$saver_earning" },
+                    "earning": { "$last": "$earning" },
+                    "rewards": { "$last": "$rewards" },
                     "earnings_summary": { "$last": "$earnings_summary" }
                 }
             },
@@ -92,12 +97,13 @@ impl DataBase{
                 "foreignField": "_id",
                 "as": "earnings_summary"
             }},
-            doc! { "$unwind": {"path" : "$earnings_summary"} },
+            doc! { "$unwind": { "path": "$earnings_summary", "preserveNullAndEmptyArrays": true }},
             doc! { "$project": {
                 "_id": 0,
+                "interval_start": "$_id.interval_start",
+                "pool": "$_id.pool",
                 "assetLiquidityFees": 1,
                 "earnings": 1,
-                "pool": 1,
                 "rewards": 1,
                 "runeLiquidityFees": 1,
                 "saverEarnings": 1,
@@ -115,9 +121,10 @@ impl DataBase{
             }},
             doc! { "$sort": sort_filter },
             doc! { "$skip": skip_size as i64 },
-            doc! {"$limit" : count.unwrap_or(400) as i64}
+            // number of pool types
+            doc! { "$limit": count.unwrap_or(27) as i64 },
         ];
-    
+
         let mut cursor = self.earnings.aggregate(pipeline).await?;
         let mut query_response = Vec::new();
         let mut earnings_summary = None;
@@ -131,7 +138,7 @@ impl DataBase{
             "runePriceUSD": 0.0,
         };
         let mut count = 0;
-    
+
         while let Some(result) = cursor.next().await {
             match result {
                 Ok(mut record) => {
@@ -139,7 +146,16 @@ impl DataBase{
                         earnings_summary = Some(earnings.clone());
                         // Accumulate sums for meta calculations
                         if let Some(earnings_doc) = earnings.as_document() {
-                            for field in ["avgNodeCount".to_string(), "blockRewards".to_string(), "bondingEarnings".to_string(), "earnings".to_string(), "liquidity_earnings".to_string(), "rune_price_usd".to_string().to_string()].iter() {
+                            for field in [
+                                "avgNodeCount".to_string(),
+                                "blockRewards".to_string(),
+                                "bondingEarnings".to_string(),
+                                "earnings".to_string(),
+                                "liquidityEarnings".to_string(),
+                                "runePriceUSD".to_string().to_string(),
+                            ]
+                            .iter()
+                            {
                                 if let Some(value) = earnings_doc.get_i64(field).ok() {
                                     meta.insert(field, meta.get_i64(field).unwrap_or(0) + value);
                                 } else if let Some(value) = earnings_doc.get_f64(field).ok() {
@@ -155,10 +171,19 @@ impl DataBase{
                 Err(e) => eprintln!("Error fetching document: {:?}", e),
             }
         }
-    
+
         // Calculate averages if count is 1 sum itself is the avg
         if count > 1 {
-            for field in ["avgNodeCount".to_string(), "blockRewards".to_string(), "bondingEarnings".to_string(), "earnings".to_string(), "liquidityEarnings".to_string(), "runePriceUSD".to_string()].iter() {
+            for field in [
+                "avgNodeCount".to_string(),
+                "blockRewards".to_string(),
+                "bondingEarnings".to_string(),
+                "earnings".to_string(),
+                "liquidityEarnings".to_string(),
+                "runePriceUSD".to_string(),
+            ]
+            .iter()
+            {
                 if let Some(sum) = meta.get_i64(field).ok() {
                     meta.insert(field, sum / count);
                 } else if let Some(sum) = meta.get_f64(field).ok() {
@@ -166,7 +191,7 @@ impl DataBase{
                 }
             }
         }
-    
+
         // since earnings route has been scaled for all pools with 7L+ records, we summarize the total reponses instead of finding individual earnings summaries like in midgard
         let result = doc! {
             "meta": meta,
@@ -177,5 +202,5 @@ impl DataBase{
         };
 
         Ok(result)
-    }    
+    }
 }
