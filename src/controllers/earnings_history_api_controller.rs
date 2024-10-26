@@ -115,7 +115,7 @@ impl DataBase{
             }},
             doc! { "$sort": sort_filter },
             doc! { "$skip": skip_size as i64 },
-            doc! { "$limit": count.unwrap_or(400) as i64 },
+            doc! {"$limit" : count.unwrap_or(400) as i64}
         ];
     
         let mut cursor = self.earnings.aggregate(pipeline).await?;
@@ -123,12 +123,12 @@ impl DataBase{
         let mut earnings_summary = None;
         // average of all the earning summary blocks is the meta for earnings
         let mut meta = doc! {
-            "avg_node_count": 0,
-            "block_rewards": 0.0,
-            "bonding_earnings": 0.0,
+            "avgNodeCount": 0,
+            "blockRewards": 0.0,
+            "bondingEarnings": 0.0,
             "earnings": 0.0,
-            "liquidity_earnings": 0.0,
-            "rune_price_usd": 0.0,
+            "liquidityEarnings": 0.0,
+            "runePriceUSD": 0.0,
         };
         let mut count = 0;
     
@@ -139,7 +139,7 @@ impl DataBase{
                         earnings_summary = Some(earnings.clone());
                         // Accumulate sums for meta calculations
                         if let Some(earnings_doc) = earnings.as_document() {
-                            for field in ["avg_node_count".to_string(), "block_rewards".to_string(), "bonding_earnings".to_string(), "earnings".to_string(), "liquidity_earnings".to_string(), "rune_price_usd".to_string().to_string()].iter() {
+                            for field in ["avgNodeCount".to_string(), "blockRewards".to_string(), "bondingEarnings".to_string(), "earnings".to_string(), "liquidity_earnings".to_string(), "rune_price_usd".to_string().to_string()].iter() {
                                 if let Some(value) = earnings_doc.get_i64(field).ok() {
                                     meta.insert(field, meta.get_i64(field).unwrap_or(0) + value);
                                 } else if let Some(value) = earnings_doc.get_f64(field).ok() {
@@ -158,7 +158,7 @@ impl DataBase{
     
         // Calculate averages if count is 1 sum itself is the avg
         if count > 1 {
-            for field in ["avg_node_count".to_string(), "block_rewards".to_string(), "bonding_earnings".to_string(), "earnings".to_string(), "liquidity_earnings".to_string(), "rune_price_usd".to_string()].iter() {
+            for field in ["avgNodeCount".to_string(), "blockRewards".to_string(), "bondingEarnings".to_string(), "earnings".to_string(), "liquidityEarnings".to_string(), "runePriceUSD".to_string()].iter() {
                 if let Some(sum) = meta.get_i64(field).ok() {
                     meta.insert(field, sum / count);
                 } else if let Some(sum) = meta.get_f64(field).ok() {
