@@ -1,6 +1,6 @@
 #![recursion_limit = "256"]
 
-use actix_web::{self, web::{scope, Data}, App, HttpServer};
+use actix_web::{self, web::{scope, Data}, App, HttpResponse, HttpServer, Responder};
 use api_docs::ApiDoc;
 use utoipa::OpenApi;
 pub mod controllers;
@@ -12,15 +12,18 @@ pub mod models;
 pub mod routes;
 pub mod utils;
 pub mod api_docs;
+
+
+#[actix_web::get("/")]
+pub async fn lander() -> impl Responder{
+    HttpResponse::Ok().body("Welcome to crypto-token-metrics-api")
+}
 #[actix_web::main]
 async fn main() -> std::io::Result<()>{
     let data_base = DataBase::init().await;
     let db_data = Data::new(data_base);
     actix_web::rt::spawn(run_cron_job(db_data.clone(), "BTC.BTC"));
     println!("Connected to DB\n");
-
-
-    
 
     let openapi = ApiDoc::openapi();
 
@@ -32,6 +35,7 @@ async fn main() -> std::io::Result<()>{
             .service(scope("/earnings").configure(earning_route::init))
             .service(scope("/swaps").configure(swap_route::init))
             .service(scope("/runepool").configure(rune_pool_route::init))
+            .service(lander)
         }
-    ).bind("localhost:3000")?.run().await
+    ).bind(("0.0.0.0",3000))?.run().await
 }
