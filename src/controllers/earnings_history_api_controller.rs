@@ -97,7 +97,17 @@ impl DataBase{
                 "runeLiquidityFees" : 1,
                 "saverEarnings" : 1,
                 "totalLiquidityFeesRune" : 1,
-                "earnings_summary" : 1,
+                "earnings_summary" : {
+                    "avg_node_count": 1,
+                    "block_rewards": 1,
+                    "bonding_earnings": 1,
+                    "earnings": 1,
+                    "end_time": 1,
+                    "liquidity_earnings": 1,
+                    "liquidity_fees": 1,
+                    "start_time": 1,
+                    "rune_price_usd": 1
+                }
             }},
             doc! { "$sort": sort_filter },
             doc! { "$skip": skip_size as i64 },
