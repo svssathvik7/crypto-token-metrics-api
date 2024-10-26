@@ -5,47 +5,85 @@ use std::error::Error as stdError;
 use crate::{parse_field, services::swap_history_service::Interval};
 
 #[derive(Debug,Serialize,Deserialize,ToSchema)]
+#[schema(rename_all="camelCase")]
 pub struct SwapHistory {
-    #[schema(value_type = String, example = "60d5ec49a1c4b5048c0e5c70")]
+    #[schema(value_type = String, example = "60d5ec49a1c4b5048c0e5c70",rename="._id not exposed in the response")]
     pub _id: ObjectId,
+    #[schema(example="BTC.BTC")]
     pub pool: String,
+    #[schema(example=8.508409670179631)]
     pub average_slip: f64,
+    #[schema(example=1647914400)]
     pub end_time: i64,
+    #[schema(example=8.508409670179631)]
     pub from_trade_average_slip: f64,
+    #[schema(example=8967017)]
     pub from_trade_count: i64,
+    #[schema(example=8.508409670179631)]
     pub from_trade_fees: f64,
+    #[schema(example=8.508409670179631)]
     pub from_trade_volume: f64,
+    #[schema(example=8.508409670179631)]
     pub from_trade_volume_usd: f64,
+    #[schema(example=8.508409670179631)]
     pub rune_price_usd: f64,
     pub start_time: i64,
+    #[schema(example=8.508409670179631)]
     pub synth_mint_average_slip: f64,
     pub synth_mint_count: i64,
+    #[schema(example=8.508409670179631)]
     pub synth_mint_fees: f64,
+    #[schema(example=8.508409670179631)]
     pub synth_mint_volume: f64,
+    #[schema(example=8.508409670179631)]
     pub synth_mint_volume_usd: f64,
+    #[schema(example=8.508409670179631)]
     pub synth_redeem_average_slip: f64,
+    #[schema(example=8.508409670179631)]
     pub synth_redeem_count: i64,
+    #[schema(example=8.508409670179631)]
     pub synth_redeem_fees: f64,
+    #[schema(example=8.508409670179631)]
     pub synth_redeem_volume: f64,
+    #[schema(example=8.508409670179631,rename="synthRedeemVolumeUSD")]
     pub synth_redeem_volume_usd: f64,
+    #[schema(example=8.508409670179631)]
     pub to_asset_average_slip: f64,
+    #[schema(example=8.508409670179631)]
     pub to_asset_count: i64,
+    #[schema(example=8.508409670179631)]
     pub to_asset_fees: f64,
+    #[schema(example=8.508409670179631)]
     pub to_asset_volume: f64,
+    #[schema(example=8.508409670179631,rename="toAssetVolumeUSD")]
     pub to_asset_volume_usd: f64,
+    #[schema(example=8.508409670179631)]
     pub to_rune_average_slip: f64,
+    #[schema(example=8.508409670179631)]
     pub to_rune_count: i64,
+    #[schema(example=8.508409670179631)]
     pub to_rune_fees: f64,
+    #[schema(example=8.508409670179631)]
     pub to_rune_volume: f64,
+    #[schema(example=8.508409670179631,rename="toRuneVolumeUSD")]
     pub to_rune_volume_usd: f64,
+    #[schema(example=8.508409670179631)]
     pub to_trade_average_slip: f64,
+    #[schema(example=8.508409670179631)]
     pub to_trade_count: i64,
+    #[schema(example=8.508409670179631)]
     pub to_trade_fees: f64,
+    #[schema(example=8.508409670179631)]
     pub to_trade_volume: f64,
+    #[schema(example=8.508409670179631,rename="toTradeVolumeUSD")]
     pub to_trade_volume_usd: f64,
+    #[schema(example=8.508409670179631)]
     pub total_count: i64,
+    #[schema(example=8.508409670179631)]
     pub total_fees: f64,
+    #[schema(example=8.508409670179631)]
     pub total_volume: f64,
+    #[schema(example=8.508409670179631,rename="totalVolumeUSD")]
     pub total_volume_usd: f64,
 }
 
