@@ -2,7 +2,7 @@ use chrono::Utc;
 use futures_util::StreamExt;
 use mongodb::bson::{doc, Document};
 
-use crate::{models::{api_request_param_model::QueryParams, custom_error_model::CustomError}, services::{db::DataBase, rune_pool_service::{ApiResponse, Meta}}, utils::db_helper_utils::{build_query_sort_skip, get_seconds_per_interval}};
+use crate::{models::{api_request_param_model::QueryParams, custom_error_model::CustomError}, services::db::DataBase, utils::db_helper_utils::{build_query_sort_skip, get_seconds_per_interval}};
 
 impl DataBase{
     pub async fn get_rune_pool_history_api(

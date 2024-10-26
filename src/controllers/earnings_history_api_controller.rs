@@ -31,7 +31,8 @@ impl DataBase{
         // as per midgard api if from is not specified the from has to be fixed back relative to either current timestamp or "to" timestamp (if given) or w.r.t the latest record in the collection
         if let Some(from) = from {
             query.insert("start_time", doc! { "$gte": from as i64 });
-        } else {
+        }
+        else {
             let calc_start = if let Some(to) = to {
                 to as i64
             } else {
@@ -53,7 +54,10 @@ impl DataBase{
             );
         }
     
+        // common query building code part has been moved to a helper function
         let (query_part, sort_filter, skip_size, limit) = build_query_sort_skip(to, sort_by, sort_order, page, limit, count).await;
+
+        // update the actual query with the query_part from builder
         query.extend(query_part.clone());
         println!("{}", query);
         
@@ -117,6 +121,7 @@ impl DataBase{
         let mut cursor = self.earnings.aggregate(pipeline).await?;
         let mut query_response = Vec::new();
         let mut earnings_summary = None;
+        // average of all the earning summary blocks is the meta for earnings
         let mut meta = doc! {
             "avg_node_count": 0,
             "block_rewards": 0.0,
@@ -132,7 +137,6 @@ impl DataBase{
                 Ok(mut record) => {
                     if let Some(earnings) = record.get("earnings_summary") {
                         earnings_summary = Some(earnings.clone());
-    
                         // Accumulate sums for meta calculations
                         if let Some(earnings_doc) = earnings.as_document() {
                             for field in ["avg_node_count".to_string(), "block_rewards".to_string(), "bonding_earnings".to_string(), "earnings".to_string(), "liquidity_earnings".to_string(), "rune_price_usd".to_string().to_string()].iter() {
@@ -145,17 +149,15 @@ impl DataBase{
                             count += 1;
                         }
                     }
-    
                     record.remove("earnings_summary");
-    
                     query_response.push(record);
                 }
                 Err(e) => eprintln!("Error fetching document: {:?}", e),
             }
         }
     
-        // Calculate averages
-        if count > 0 {
+        // Calculate averages if count is 1 sum itself is the avg
+        if count > 1 {
             for field in ["avg_node_count".to_string(), "block_rewards".to_string(), "bonding_earnings".to_string(), "earnings".to_string(), "liquidity_earnings".to_string(), "rune_price_usd".to_string()].iter() {
                 if let Some(sum) = meta.get_i64(field).ok() {
                     meta.insert(field, sum / count);
@@ -165,6 +167,7 @@ impl DataBase{
             }
         }
     
+        // since earnings route has been scaled for all pools with 7L+ records, we summarize the total reponses instead of finding individual earnings summaries like in midgard
         let result = doc! {
             "meta": meta,
             "intervals": {
@@ -172,9 +175,7 @@ impl DataBase{
                 "pools": query_response
             }
         };
-    
-        // Log the meta object before returning the response
-    
+
         Ok(result)
     }    
 }
