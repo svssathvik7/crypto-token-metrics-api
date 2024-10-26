@@ -57,6 +57,8 @@ async fn fetch_all_rune_pools_to_db(db:web::Data<DataBase>) -> impl Responder{
         }
         start = end_time;
     }
+    // adapting non-strict fetch, error at a bucket doesn't stop whole fetch process
+    // because observed failure due to network multiple times with midgard while testing
     HttpResponse::Ok().body(format!("Fetched and added rune pool records to database"))
 }
 
