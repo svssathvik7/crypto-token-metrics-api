@@ -16,7 +16,7 @@ pub mod api_docs;
 async fn main() -> std::io::Result<()>{
     let data_base = DataBase::init().await;
     let db_data = Data::new(data_base);
-    // actix_web::rt::spawn(run_cron_job(db_data.clone(), "BTC.BTC"));
+    actix_web::rt::spawn(run_cron_job(db_data.clone(), "BTC.BTC"));
     println!("Connected to DB\n");
 
 
