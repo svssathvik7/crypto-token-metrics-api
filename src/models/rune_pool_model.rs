@@ -1,13 +1,14 @@
 use mongodb::bson::oid::ObjectId;
 use serde::{Deserialize, Serialize};
-use utoipa::ToSchema;
+use utoipa::{openapi::schema, ToSchema};
 
 use crate::{parse_field, services::rune_pool_service::Interval};
 use std::error::Error as stdError;
 
 #[derive(Debug,Serialize,Deserialize, ToSchema)]
+#[schema(rename_all="camelCase")]
 pub struct RunePool{
-    #[schema(value_type = String, example = "60d5ec49a1c4b5048c0e5c70")]
+    #[schema(value_type = String, example = "60d5ec49a1c4b5048c0e5c70", rename="._id not exposed in response")]
     pub _id : ObjectId,
     #[schema(example=391)]
     pub count : f64,
