@@ -27,8 +27,7 @@ impl DataBase {
             limit,
         } = params;
     
-        let seconds_per_interval =
-            get_seconds_per_interval(interval.as_ref().unwrap_or(&"hour".to_string()).as_str());
+        let seconds_per_interval = get_seconds_per_interval(interval.as_ref().unwrap_or(&"hour".to_string()).as_str());
     
         if let Some(pool) = pool {
             // Check pool constraint
@@ -39,7 +38,8 @@ impl DataBase {
             }
             query.insert("pool", pool);
         }
-    
+        
+        // as per midgard api if from is not specified the from has to be fixed back relative to either current timestamp or "to" timestamp (if given) or w.r.t the latest record in the collection
         if let Some(from) = from {
             query.insert("start_time", doc! { "$gte": from as i64 });
         } else {
@@ -57,9 +57,12 @@ impl DataBase {
                 doc! {"$gte": calc_start - (count * queried_interval_duration) as i64},
             );
         }
+
+        // common query building code part has been moved to a helper function
         let (query_part, sort_filter, skip_size, limit) =
             build_query_sort_skip(to, sort_by, sort_order, page, limit, count).await;
     
+        // update the actual query with the query_part from builder
         query.extend(query_part.clone());
         let pipeline = vec![
             doc! { "$match": query },

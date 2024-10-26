@@ -29,7 +29,8 @@ impl DataBase{
                 "Invalid parameter pool!".to_string(),
             ));
         }
-
+        
+        // as per midgard api if from is not specified the from has to be fixed back relative to either current timestamp or "to" timestamp (if given) or w.r.t the latest record in the collection
         if let Some(from) = from {
             query.insert("start_time", doc! { "$gte": from as i64 });
         } else {
