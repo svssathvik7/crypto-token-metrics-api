@@ -1,6 +1,6 @@
 use chrono::Utc;
 use futures_util::StreamExt;
-use mongodb::bson::{doc, Bson, Document};
+use mongodb::bson::{doc, Document};
 
 use crate::{
     models::{api_request_param_model::QueryParams, custom_error_model::CustomError},
@@ -27,7 +27,7 @@ impl DataBase {
             limit,
         } = params;
     
-        let mut seconds_per_interval =
+        let seconds_per_interval =
             get_seconds_per_interval(interval.as_ref().unwrap_or(&"hour".to_string()).as_str());
     
         if let Some(pool) = pool {
@@ -57,9 +57,10 @@ impl DataBase {
                 doc! {"$gte": calc_start - (count * queried_interval_duration) as i64},
             );
         }
-        let (query, sort_filter, skip_size, limit) =
+        let (query_part, sort_filter, skip_size, limit) =
             build_query_sort_skip(to, sort_by, sort_order, page, limit, count).await;
     
+        query.extend(query_part.clone());
         let pipeline = vec![
             doc! { "$match": query },
             doc! {
