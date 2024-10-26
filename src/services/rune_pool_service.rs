@@ -1,7 +1,5 @@
 use serde::{Deserialize, Serialize};
-
 use crate::models::rune_pool_model::RunePool;
-use reqwest::Error as reqwestError;
 use super::db::DataBase;
 
 fn generate_api_url(interval:&str,from:&str,count:&str) -> String{
@@ -35,33 +33,56 @@ pub struct ApiResponse{
 }
 
 impl RunePool{
-    pub async fn store_rune_pool(db:&DataBase,data:ApiResponse){
+    pub async fn store_rune_pool(db:&DataBase,data:ApiResponse) -> Result<(),String>{
         for interval in data.intervals{
             match RunePool::try_from(interval) {
                 Ok(rune_pool_object) => {
                     match db.rune_pool_history.insert_one(rune_pool_object).await {
                         Ok(_record) => println!("Rune pool record writted to db!"),
-                        Err(e) => eprint!("Err adding rune pool to db {}",e)
+                        Err(e) => eprintln!("Err adding rune pool to db {}",e)
                     }
                 },
                 Err(e) => {
-                    eprint!("Error parsing interval to rune pool object! {}",e)
+                    return Err(format!("Error parsing interval to rune pool object! {}",e));
                 }
             }
         }
+        Ok(())
     }
-    pub async fn fetch_rune_pool(db:&DataBase,interval:&str,count:&str,from:&str) -> Result<i64, reqwestError>{
+    pub async fn fetch_rune_pool(db:&DataBase,interval:&str,count:&str,from:&str) -> Result<i64, String>{
         let url = generate_api_url(interval, from, count);
         println!("url - {}",&url);
-        let api_response = reqwest::get(&url).await?;
-        let raw_body = api_response.text().await?;
-
+        let api_response = match reqwest::get(&url).await {
+            Ok(res) => res,
+            Err(e) => return Err(format!("Failed to fetch data: {}", e))
+        };
+    
+        let raw_body = match api_response.text().await {
+            Ok(res) => res,
+            Err(e) => return Err(format!("Failed to read response text: {}", e)),
+        };
+    
         println!("Raw response: {}", raw_body);
-
-        let response = reqwest::get(&url).await?.json::<ApiResponse>().await?;
-        let end_time = response.meta.end_time.clone();
-        let end_time = end_time.parse::<i64>().unwrap();
-        self::RunePool::store_rune_pool(db, response).await;
+    
+        let response = match reqwest::get(&url).await {
+            Ok(res) => {
+                match res.json::<ApiResponse>().await {
+                    Ok(res) => res,
+                    Err(e) => return Err(format!("Failed to parse JSON response: {}", e)),
+                }
+            },
+            Err(e) => return Err(format!("{}", e.to_string())),
+        };        
+    
+        // Extract end_time and handle any potential errors
+        let end_time = match response.meta.end_time.parse::<i64>() {
+            Ok(time) => time,
+            Err(e) => return Err(format!("Failed to parse end time: {}", e))
+        };
+        match self::RunePool::store_rune_pool(db, response).await{
+            Ok(_res) => (),
+            Err(e) => return Err(format!("{}",e))
+        };
         Ok(end_time)
     }
 }
