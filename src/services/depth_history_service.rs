@@ -1,8 +1,6 @@
-use chrono::Utc;
 use serde::{Deserialize, Serialize};
 
 use crate::models::depth_history_model::PoolDepthPriceHistory;
-use reqwest::Error as reqwestError;
 use super::db::DataBase;
 
 // due to volume issues we are sticking to BTC BTC pool type in depths fetch
@@ -58,35 +56,56 @@ pub struct ApiResponse{
 }
 
 impl PoolDepthPriceHistory{
-    pub async fn store_price_history(db: &DataBase, data: ApiResponse){
+    pub async fn store_price_history(db: &DataBase, data: ApiResponse) -> Result<(),String>{
         for interval in data.intervals {
             match PoolDepthPriceHistory::try_from(interval) {
                 Ok(pool_history_interval) => {
                     if let Err(e) = db.depth_history.insert_one(pool_history_interval).await {
                         eprint!("Error inserting record: {:?}", e);
                     }
-                }
+                },
                 Err(e) => {
-                    eprint!("Error writing pool history to db: {:?}", e);
+                    return Err(format!("Error writing pool history to db: {:?}", e));
                 }
             }
         }
-        ()
+        Ok(())
     }
-    pub async fn fetch_price_history(db:&DataBase,pool:&str,interval:&str,count:&str,from:&str) -> Result<i64,reqwestError>{
+    pub async fn fetch_price_history(db:&DataBase,pool:&str,interval:&str,count:&str,from:&str) -> Result<i64,String>{
         let url = generate_api_url(&pool,&interval,&from,&count);
         println!("{}",url);
-        let api_response = reqwest::get(&url).await?;
-        let raw_body = api_response.text().await?;
-
+        let api_response = match reqwest::get(&url).await {
+            Ok(res) => res,
+            Err(e) => return Err(format!("Failed to fetch data: {}", e))
+        };
+    
+        let raw_body = match api_response.text().await {
+            Ok(res) => res,
+            Err(e) => return Err(format!("Failed to read response text: {}", e)),
+        };
+    
         println!("Raw response: {}", raw_body);
-
-        // parse the data asper the designed API Response struct
-        let response = reqwest::get(&url).await?.json::<ApiResponse>().await?;
+    
+        let response = match reqwest::get(&url).await {
+            Ok(res) => {
+                match res.json::<ApiResponse>().await {
+                    Ok(res) => res,
+                    Err(e) => return Err(format!("Failed to parse JSON response: {}", e)),
+                }
+            },
+            Err(e) => return Err(format!("{}", e.to_string())),
+        };        
+    
+        // Extract end_time and handle any potential errors
+        let end_time = match response.meta.end_time.parse::<i64>() {
+            Ok(time) => time,
+            Err(e) => return Err(format!("Failed to parse end time: {}", e))
+        };
         // println!("{:?}",response);
-        let end_time = response.meta.end_time.clone();
-        let end_time = end_time.parse::<i64>().unwrap_or(Utc::now().timestamp());
-        self::PoolDepthPriceHistory::store_price_history(db,response).await;
+        match self::PoolDepthPriceHistory::store_price_history(db,response).await{
+            Ok(_res) => (),
+            Err(e) => return Err(format!("{}",e))
+        };
         // println!("{}","in");
         Ok(end_time)
     }

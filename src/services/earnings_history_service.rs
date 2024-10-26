@@ -147,7 +147,7 @@ impl PoolEarningHistory{
         // Extract end_time and handle any potential errors
         let end_time = match response.meta.end_time.parse::<i64>() {
             Ok(time) => time,
-            Err(e) => return Err(format!("Failed to parse end time: {}", e)), // Custom error message
+            Err(e) => return Err(format!("Failed to parse end time: {}", e))
         };
     
         // Store earning history and handle any potential errors
