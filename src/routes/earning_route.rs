@@ -15,7 +15,7 @@ use crate::{models::{api_request_param_model::{validate_query, QueryParams}, ear
         ("sort_by" = Option<String>, Query, description = "Field to sort by"),
         ("sort_order" = Option<i8>, Query, description = "1 for ascending order and -1 for descending order"),
         ("interval" = Option<String>, Query, description = "Time interval for aggregation (hour, day, week, month, quarter, year)"),
-        ("count" = Option<u32>, Query, description = "Total records that are to be fetched (1-400)")
+        ("count" = Option<u32>, Query, description = "Due to high volume (7Lakh+ records) free tier supports only 1 interval output with 26 pools")
     ),
     responses(
         (status = 200, description = "List of pool earnings", body = Vec<PoolEarningHistory>),
