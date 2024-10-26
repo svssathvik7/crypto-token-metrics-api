@@ -7,15 +7,15 @@ use crate::{models::{api_request_param_model::{validate_query, QueryParams}, ear
     get,
     path = "/earnings",
     params(
-        ("from" = Option<u64>, Query, description = "Start time Unix timestamp "),
+        ("from" = Option<u64>, Query, description = "Start time Unix timestamp, if not specified, from = `(current_time (or) to_time - interval_dur*count)`"),
         ("to" = Option<u64>, Query, description = "End time Unix timestamp"),
-        ("pool" = Option<String>, Query, description = "Pool identifier like BTC.BTC"),
-        ("page" = Option<u64>, Query, description = "Page number (minimum: 1)"),
-        ("limit" = Option<u32>, Query, description = "Items per page (1-400)"),
+        ("pool" = Option<String>, Query, description = "Pool identifier like `BTC.BTC`"),
+        ("page" = Option<u64>, Query, description = "Page number (minimum: `1`)"),
+        ("limit" = Option<u32>, Query, description = "Items per page `(1-400)`"),
         ("sort_by" = Option<String>, Query, description = "Field to sort by"),
-        ("sort_order" = Option<i8>, Query, description = "1 for ascending order and -1 for descending order"),
-        ("interval" = Option<String>, Query, description = "Time interval for aggregation (hour, day, week, month, quarter, year)"),
-        ("count" = Option<u32>, Query, description = "Due to high volume (7Lakh+ records) free tier supports only 1 interval output with 26 pools")
+        ("sort_order" = Option<i8>, Query, description = "`1` for ascending order and `-1` for descending order"),
+        ("interval" = Option<String>, Query, description = "Time interval for aggregation `(hour, day, week, month, quarter, year)`"),
+        ("count" = Option<u32>, Query, description = "Due to high volume (7Lakh+ records) free tier supports only `1 interval` output with 26 pools")
     ),
     responses(
         (status = 200, description = "List of pool earnings", body = Vec<PoolEarningHistory>),
