@@ -52,8 +52,8 @@ impl DataBase{
             );
         }
     
-        let (query, sort_filter, skip_size, limit) = build_query_sort_skip(to, sort_by, sort_order, page, limit, count).await;
-    
+        let (query_part, sort_filter, skip_size, limit) = build_query_sort_skip(to, sort_by, sort_order, page, limit, count).await;
+        query.extend(query_part.clone());
         println!("{}", query);
         
         let pipeline = vec![
