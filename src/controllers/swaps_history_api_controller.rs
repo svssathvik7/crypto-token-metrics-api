@@ -61,7 +61,7 @@ impl DataBase{
             );
         }
         // common query building code part has been moved to a helper function
-        let (query_part, sort_filter, skip_size, limit) = build_query_sort_skip(to, sort_by, sort_order, page, limit, count).await;
+        let (query_part, sort_filter, skip_size, _limit) = build_query_sort_skip(to, sort_by, sort_order, page, limit, count).await;
         // update the actual query with the query_part from builder
         query.extend(query_part.clone());
         let pipeline = vec![

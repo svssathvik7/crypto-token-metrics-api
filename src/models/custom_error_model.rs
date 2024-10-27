@@ -1,6 +1,5 @@
 use mongodb::error::Error as mongoError;
 use serde::{Deserialize, Serialize};
-use utoipa::ToSchema;
 #[derive(Debug, Serialize, Deserialize)]
 pub enum CustomError {
     InvalidInput(String),

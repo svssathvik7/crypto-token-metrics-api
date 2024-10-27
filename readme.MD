@@ -1,5 +1,6 @@
 # crypto-token-metrics-api - a midgard api clone
 
+## API Documentation - https://crypto-token-metrics-api.onrender.com/swagger-ui/
 
 ## Project Structure
 
