@@ -109,19 +109,18 @@ impl DataBase {
                 "saverEarnings": 1,
                 "totalLiquidityFeesRune": 1,
                 "earnings_summary": {
-                    "avg_node_count": 1,
-                    "block_rewards": 1,
-                    "bonding_earnings": 1,
-                    "earnings": 1,
-                    "end_time": 1,
-                    "liquidity_earnings": 1,
-                    "start_time": 1,
-                    "rune_price_usd": 1
+                    "avgNodeCount": "$earnings_summary.avg_node_count",
+                    "blockRewards": "$earnings_summary.block_rewards",
+                    "bondingEarnings": "$earnings_summary.bonding_earnings",
+                    "earnings": "$earnings_summary.earnings",
+                    "endTime": "$earnings_summary.end_time",
+                    "liquidityEarnings": "$earnings_summary.liquidity_earnings",
+                    "startTime": "$earnings_summary.start_time",
+                    "runePriceUSD": "$earnings_summary.rune_price_usd"
                 }
             }},
             doc! { "$sort": sort_filter },
             doc! { "$skip": skip_size as i64 },
-            // number of pool types
             doc! { "$limit": count.unwrap_or(27) as i64 },
         ];
 
